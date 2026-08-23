@@ -1,0 +1,354 @@
+/* CustMen.css - Customer Menu Styles */
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Main container styles */
+.cust-menu-page {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  padding: 0.5rem;
+  border: none;
+}
+
+.brand {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  background: linear-gradient(to bottom, #9146d8 30%, #000000);
+  border: 2px #9146d8 transparent;
+  border-radius: 15px;
+  padding: 15px 05px;
+  color: #f6f5f5;
+  width: fit-content;
+  margin-bottom: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.menu-container {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header styles */
+.menu-header {
+  display: flex;
+  justify-content: left;
+  align-items: left;
+  margin-bottom: 2rem;
+  text-align: left;
+  padding-top: 22px;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.restaurant-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 35px;
+  font-weight: 700;
+  margin: 0;
+  color: #000;
+  line-height: 1.2;
+  padding: 0;
+}
+
+.menu-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 35px;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 0;
+
+  background: linear-gradient(to right, #0D0C0D 30%, #7911C3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+
+/* Menu categories grid - Mobile First */
+.menu-categories {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Ensure mobile layout works correctly */
+@media (max-width: 767px) {
+  .menu-categories.mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    height: 700px;
+    grid-auto-flow: row;
+    grid-auto-rows: auto;
+    grid-template-areas: none;
+}
+  
+  .menu-categories.mobile-grid .category-card {
+    grid-area: auto !important;
+    margin-bottom: 0;
+  }
+  
+  .menu-categories.mobile-grid .category-image-container {
+    height: 100%;
+  }
+  
+  .menu-container {
+    padding: 1rem;
+  }
+}
+
+/* Mobile Grid Layout - Force 2 columns */
+.menu-categories.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
+  grid-template-areas: none;
+}
+
+/* Category card styles */
+.category-card {
+  border-radius: 25px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+/* Specific styling for mobile grid cards */
+.menu-categories.mobile-grid .category-card {
+  width: 100%;
+  margin-bottom: 0;
+  grid-area: auto !important;
+}
+
+/* Offset second column items downward */
+.menu-categories.mobile-grid .category-card:nth-child(even) {
+  margin-top: 50px;
+}
+
+.category-card:hover, 
+.category-card:active {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.category-image-container {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  flex: 1;
+}
+
+/* Mobile specific image container height */
+.menu-categories.mobile-grid .category-image-container {
+  height: 100%;
+  width: 100%;
+}
+
+.category-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.category-card:hover .category-image {
+  transform: scale(1.05);
+}
+
+/* Category overlay - positioned on top of image */
+.category-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.3rem 0.5rem;
+  margin: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  opacity: 0.7;
+  z-index: 2;
+  border-radius: 50px;
+}
+
+.category-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #000;
+  flex: 1;
+}
+
+/* Hide the old footer */
+.category-footer {
+  display: none;
+}
+
+.view-btn {
+  width: 35px;
+  height: 29px;
+  border-radius: 25px;
+  background: linear-gradient(to left, #9146d8 30%, #000000);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.view-btn:hover,
+.view-btn:active {
+  background: linear-gradient(to left, #9146d8 30%, #000000);
+  transform: scale(1.1);
+}
+
+.arrow-icon {
+  font-size: 0.9rem;
+  color: #FFFFFF;
+}
+
+/* Tablet styles */
+@media (min-width: 576px) {
+  .menu-categories:not(.mobile-grid) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .menu-container {
+    padding: 2rem;
+  }
+  
+  .menu-header {
+    justify-content: left;
+  }
+  
+  .menu-categories:not(.mobile-grid) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+  
+  .restaurant-title {
+    font-size: 40px;
+  }
+  
+  .menu-title {
+    font-size: 40px;
+  }
+  
+  .category-footer {
+    padding: 0.75rem;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 992px) {
+  .menu-container {
+    padding: 2.5rem;
+  }
+  
+  .menu-categories:not(.mobile-grid) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+  
+  .category-overlay {
+    padding: 1rem;
+  }
+  
+  .category-name {
+    font-size: 1.1rem;
+  }
+  
+  .view-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  /* Two rows with 3 columns layout for desktop */
+  .menu-categories:not(.mobile-grid) {
+    display: grid;
+    grid-template-areas:
+      "breakfast coffees desserts"
+      "burgers pastas soups";
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, auto);
+  }
+}
+
+/* Large desktop styles */
+@media (min-width: 1200px) {
+  .menu-categories {
+    gap: 2.5rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+  
+  .category-overlay {
+    padding: 1.25rem;
+  }
+  
+  .category-name {
+    font-size: 1.2rem;
+  }
+  
+  .view-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .menu-container {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+}

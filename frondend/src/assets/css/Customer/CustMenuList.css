@@ -1,0 +1,519 @@
+/* CustMenuList.css - Customer Menu List Styles */
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Main container styles */
+.cust-menu-list-page {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  padding: 0.5rem;
+  border: none;
+}
+
+.menu-list-container {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header with Back and Search */
+.menu-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 0rem 0rem 0.5rem;
+  transition: opacity 0.2s ease;
+  margin: 0;
+}
+
+.back-btn:hover {
+  opacity: 0.7;
+}
+
+/* Category Tabs */
+.category-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  padding: 0.2rem 0.1rem;
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+.category-tab {
+  padding: 1.2rem 1.5rem;
+  border-radius: 25px;
+  border: none;
+  background-color: #ffffff;
+  color: #000;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.category-tab.active {
+  background: linear-gradient(to bottom, #7711BF   30%, #000000);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(121, 17, 195, 0.3);
+}
+
+.category-tab:hover:not(.active) {
+  background-color: #f5f5f5;
+}
+
+/* Controls Section */
+.menu-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.control-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  transition: color 0.2s ease;
+}
+
+.control-btn:hover {
+  color: #000;
+}
+
+.control-btn svg {
+  font-size: 1rem;
+}
+
+/* Menu categories grid - Mobile First - Same as CustMen.css */
+.menu-categories {
+  display: grid;
+  gap: 1rem;
+}
+
+/* Ensure mobile layout works correctly - Same as CustMen.css */
+@media (max-width: 767px) {
+  .menu-categories.mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    height: 700px;
+    grid-auto-flow: row;
+    grid-auto-rows: auto;
+    grid-template-areas: none;
+  }
+  
+  .menu-categories.mobile-grid .category-card {
+    grid-area: auto !important;
+    margin-bottom: 0;
+  }
+  
+  .menu-categories.mobile-grid .category-image-container {
+    height: 100%;
+  }
+  
+  .menu-list-container {
+    padding: 1rem;
+  }
+}
+
+/* Mobile Grid Layout - Force 2 columns - Same as CustMen.css */
+.menu-categories.mobile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  width: 100%;
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
+  grid-template-areas: none;
+}
+
+/* Category card styles - Same as CustMen.css */
+.category-card {
+  border-radius: 25px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+/* Specific styling for mobile grid cards - Same as CustMen.css */
+.menu-categories.mobile-grid .category-card {
+  width: 100%;
+  margin-bottom: 0;
+  grid-area: auto !important;
+}
+
+/* Offset second column items downward - Same as CustMen.css */
+.menu-categories.mobile-grid .category-card:nth-child(even) {
+  margin-top: 50px;
+}
+
+.category-card:hover, 
+.category-card:active {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.category-image-container {
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  flex: 1;
+}
+
+/* Mobile specific image container height - Same as CustMen.css */
+.menu-categories.mobile-grid .category-image-container {
+  height: 100%;
+  width: 100%;
+}
+
+.category-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.category-card:hover .category-image {
+  transform: scale(1.05);
+}
+
+/* Category overlay - positioned on top of image - Same as CustMen.css */
+.category-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.3rem 0.5rem;
+  margin: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFFFFF;
+  opacity: 0.7;
+  z-index: 2;
+  border-radius: 50px;
+}
+
+.category-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #000;
+  flex: 1;
+}
+
+/* Hide the old footer */
+.category-footer {
+  display: none;
+}
+
+.view-btn {
+  width: 35px;
+  height: 29px;
+  border-radius: 25px;
+  background: linear-gradient(to left, #9146d8 30%, #000000);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.view-btn:hover,
+.view-btn:active {
+  background: linear-gradient(to left, #9146d8 30%, #000000);
+  transform: scale(1.1);
+}
+
+.arrow-icon {
+  font-size: 0.9rem;
+  color: #FFFFFF;
+}
+
+/* Tablet styles - Same as CustMen.css */
+@media (min-width: 576px) {
+  .menu-categories:not(.mobile-grid) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .menu-list-container {
+    padding: 2rem;
+  }
+  
+  .menu-categories:not(.mobile-grid) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+}
+
+/* Desktop styles - Same as CustMen.css */
+@media (min-width: 992px) {
+  .menu-list-container {
+    padding: 2.5rem;
+  }
+  
+  .menu-categories:not(.mobile-grid) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+  
+  .category-overlay {
+    padding: 1rem;
+  }
+  
+  .category-name {
+    font-size: 1.1rem;
+  }
+  
+  .view-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  /* Two rows with 3 columns layout for desktop */
+  .menu-categories:not(.mobile-grid) {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, auto);
+  }
+}
+
+/* Large desktop styles - Same as CustMen.css */
+@media (min-width: 1200px) {
+  .menu-categories {
+    gap: 2.5rem;
+  }
+  
+  .category-image-container {
+    height: 100%;
+  }
+  
+  .category-overlay {
+    padding: 1.25rem;
+  }
+  
+  .category-name {
+    font-size: 1.2rem;
+  }
+  
+  .view-btn {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .menu-list-container {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+}
+
+/* List View Styles - Column Layout */
+.food-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.food-item-list-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-radius: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.food-item-list-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
+}
+
+.food-item-image-wrapper {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 15px;
+  overflow: hidden;
+  background-color: #f5f5f5;
+}
+
+.food-item-list-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.food-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.food-item-name {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #7911C3;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.food-item-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.food-item-price-badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  background-color: #f5f5f5;
+  color: #666;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.food-item-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to left, #7711BF   30%, #000000);
+  color: #ffffff;
+  border: none;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.food-item-add-btn:hover,
+.food-item-add-btn:active {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.food-item-add-btn svg {
+  font-size: 1rem;
+}
+
+/* Responsive adjustments for list view */
+@media (max-width: 767px) {
+  .food-item-list-card {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+  
+  .food-item-image-wrapper {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .food-item-name {
+    font-size: 1rem;
+  }
+  
+  .food-item-price-badge {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .food-item-add-btn {
+    padding: 0.3rem 2rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .food-item-list-card {
+    padding: 1.25rem;
+    gap: 1.25   rem;
+  }
+  
+  .food-item-image-wrapper {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .food-item-name {
+    font-size: 1.2rem;
+  }
+}

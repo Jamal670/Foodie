@@ -1,0 +1,362 @@
+/* CustOrder.css - My Order Page Styles */
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --tab-bg-color: #2b2626; /* Dark brown/black color from image */
+  --page-bg-color: #ffffff;
+  --text-active-color: #ffffff;
+  --text-inactive-color: #555555;
+  --accent-color: #7911C3; /* Keeping the existing purple for other elements if needed, or stick to monochrome */
+}
+
+/* Main container */
+.order-page {
+  font-family: 'Inter', sans-serif;
+  background: var(--page-bg-color);
+  min-height: 100vh;
+  color: #333;
+  padding-bottom: 100px;
+}
+
+.order-container {
+  padding: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-top: 0;
+}
+
+/* White Header Bar */
+.order-header-bar {
+  background-color: var(--page-bg-color);
+  padding: 1rem 1.5rem 0.5rem 1.5rem; /* Reduced bottom padding */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  position: sticky; /* Keep sticky or remove if it conflicts with the design flow */
+  top: 0;
+  z-index: 100;
+}
+
+.back-btn-header {
+  background: none;
+  border: none;
+  color: #333;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 10px;
+}
+
+.back-text {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #555;
+}
+
+.order-title-header {
+  font-family: 'Inter', sans-serif;
+  font-size: 2rem;
+  font-weight: 800; /* Bolder font */
+  color: #000000;
+  margin: 0;
+  text-align: left;
+  line-height: 1.2;
+}
+
+/* White Top Section with Tabs */
+.order-top-section {
+  background-color: var(--page-bg-color);
+  padding-bottom: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Order Type Tabs Container */
+.order-type-tabs {
+  display: flex;
+  gap: 0;
+  margin-top: 2rem;
+  position: relative;
+  align-items: flex-end;
+  padding-left: 1rem; /* Align with container padding */
+}
+
+.order-type-tab {
+  padding: 1rem 2rem;
+  border: none;
+  background: transparent;
+  color: var(--text-inactive-color);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  font-family: 'Inter', sans-serif;
+  transition: color 0.2s ease;
+  border-radius: 25px 25px 0 0;
+}
+
+/* Active Tab Styling - The "Wave" Effect */
+.order-type-tab.active {
+  background-color: var(--tab-bg-color);
+  color: var(--text-active-color);
+  font-weight: 700;
+  padding-bottom: 1rem; /* Extend down to overlap content */
+  z-index: 2;
+  font-size: 1.1rem; /* Slightly larger active text */
+  /* Remove overlapping margins if any */
+  margin-bottom: -1px; /* Ensure it sits on the content */
+}
+
+/* INVERTED CORNERS using pseudo elements on the active tab */
+.order-type-tab.active::before,
+.order-type-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0px; /* Align exactly with bottom */
+  width: 25px; /* Match radius */
+  height: 25px; /* Match radius */
+  background: transparent;
+  z-index: 3;
+}
+
+/* Left side inverted curve */
+.order-type-tab.active::before {
+  left: -25px;
+  box-shadow: 12px 12px 0 var(--tab-bg-color); /* Correct shadow offset */
+  border-bottom-right-radius: 25px;
+}
+
+/* Right side inverted curve */
+.order-type-tab.active::after {
+  right: -25px;
+  box-shadow: -12px 12px 0 var(--tab-bg-color); /* Correct shadow offset */
+  border-bottom-left-radius: 25px;
+}
+
+/* Dark Content Section containing Inputs and Bills */
+.order-content-section {
+  background-color: var(--tab-bg-color);
+  color: #fff; /* Text inside dark section */
+  padding: 2rem 1.5rem; /* Add padding for content */
+  min-height: 500px; /* Placeholder height */
+  border-top-right-radius: 25px;
+  border-bottom-left-radius: 25px; 
+  border-bottom-right-radius: 25px;
+  /* Connects to tabs */
+  position: relative;
+  z-index: 1;
+}
+
+/* Logic for corner shape based on active tab */
+.order-content-section.first-tab-active {
+    border-top-left-radius: 0; /* Square corner for first tab */
+}
+.order-content-section:not(.first-tab-active) {
+    border-top-left-radius: 25px; /* Round corner if first tab is inactive */
+}
+
+/* Input Fields inside the dark section */
+.order-inputs {
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #cccccc; /* Slightly lighter than white for labels */
+  margin-bottom: 0.5rem;
+}
+
+/* Inputs with darker background relative to the container */
+.order-input,
+.order-textarea,
+.order-select {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #444; /* Subtle border */
+  background-color: #3a3535; /* Slightly lighter than container */
+  color: #ffffff;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+}
+
+.order-input::placeholder,
+.order-textarea::placeholder {
+  color: #888;
+}
+
+.order-input:focus,
+.order-textarea:focus,
+.order-select:focus {
+  border-color: #777;
+}
+
+.order-select {
+  appearance: none;
+}
+
+.dropdown-wrapper {
+  position: relative;
+}
+.dropdown-icon {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  pointer-events: none;
+}
+
+
+/* Bill Section Styles adjustments for dark theme */
+.bill-section {
+  margin-bottom: 2rem;
+}
+
+.bill-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.bill-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.bill-item-name {
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+/* Quantity controls override */
+.quantity-controls {
+  background: #3a3535;
+  border-radius: 20px;
+  padding: 5px 10px;
+}
+
+.quantity-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.quantity-value {
+  color: #fff;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+  background: transparent;
+  width: auto;
+  height: auto;
+  border: none;
+}
+
+.item-price-badge {
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: none;
+  padding: 0;
+  min-width: auto;
+  text-align: right;
+}
+
+.bill-divider {
+  background-color: #444;
+  margin: 1.5rem 0;
+}
+
+.bill-subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.subtotal-price-badge {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    min-width: auto;
+    font-size: 1.2rem;
+}
+
+
+/* Place Order Button - Full Width Floating or Static at bottom */
+.place-order-section {
+  padding: 1rem 0;
+  position: relative; /* Changed from fixed for now, relative to container */
+  background: transparent;
+}
+
+.place-order-btn {
+  width: 100%;
+  border-radius: 50px;
+  background: #ffffff;
+  color: #000;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Icon and text separated */
+  padding: 0.5rem 0.5rem 0.5rem 2rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.place-order-text {
+  background: transparent;
+  color: #000;
+  padding: 0;
+  text-align: left;
+}
+
+.place-order-icon {
+  background: #000;
+  color: #fff;
+  width: 50px; /* Circle */
+  height: 50px; /* Circle */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+  .order-container {
+      max-width: 700px;
+  }
+}
+
+

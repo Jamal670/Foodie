@@ -1,0 +1,206 @@
+.dashboard {
+  height: 100vh;
+  background: #f5f6f8;
+  color: #333;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px 20px 5px 20px;
+  overflow-y: auto;
+}
+
+/* Orders Overview title */
+.overview-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* QR Code Page Specific Styles */
+.qr-content-container {
+  margin-top: 20px;
+}
+
+.qr-row {
+  margin: 0 -10px;
+}
+
+.qr-col {
+  padding: 0 10px;
+  margin-bottom: 20px;
+}
+
+.qr-card {
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 80px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.qr-logo-container {
+  margin-bottom: 15px;
+}
+
+.qr-logo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  background: linear-gradient(to bottom, #9146d8 30%, #000000);
+  border: 2px #9146d8 transparent;
+  border-radius: 15px;
+  padding: 15px 05px;
+  color: #f6f5f5;
+  width: fit-content;
+  margin-bottom: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.qr-instructions {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.qr-code-container {
+  width: 180px;
+  height: 250px;
+  margin: 0 auto 20px;
+}
+
+.qr-code-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qr-download-text {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.qr-download-button-container {
+  margin-top: auto;
+}
+
+.qr-download-button {
+  background-color: #e6f7ef !important;
+  color: #333 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 10px 20px !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  justify-content: center !important; /* Added */
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.3s ease !important;
+}
+
+.qr-download-button:hover {
+  background-color: #d1f0e1 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.empty-categories-containers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  min-height: calc(100vh - 80px); /* Header ki height ke mutabiq adjust kar lena */
+
+  background-color: white;
+  border-radius: 8px;
+  padding: 60px 20px;
+  width: 100%;
+}
+
+.add-table-btn{
+  background-color: #DAFBE8;
+  color: #000000 !important;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 12px 30px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.add-table-btn:hover {
+  background-color: #adf3b8;
+  color: #000000 !important;
+}
+
+.empty-categories-message {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+
+.add-category-btn-matchs {
+  background-color: #6a0dad;
+  color: white;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 10px 20px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-category-btn-matchs:hover {
+  opacity: 0.9;
+  background-color: #6a0dad !important;
+}
+
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .qr-card {
+    padding: 20px;
+  }
+  
+  .qr-code-container {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .header {
+    padding-top: 50px;
+  }
+  
+  .overview-title {
+    font-size: 1.4rem;
+  }
+  
+  .qr-row {
+    margin: 0;
+  }
+  
+  .qr-col {
+    padding: 0 5px;
+  }
+  
+  .qr-instructions,
+  .qr-download-text {
+    font-size: 0.85rem;
+  }
+}

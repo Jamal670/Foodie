@@ -1,0 +1,637 @@
+.dashboard {
+  height: 100vh;
+  background: #f5f6f8;
+  color: #333;
+}
+
+.main-content {
+  flex: 1;
+  padding: 20px 20px 5px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: #f5f6f8;
+}
+
+.overview-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+/* Edit Menu Buttons */
+.menu-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.menu-tab-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 1.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-tab-btn.active {
+  background-color: #000000;
+  color: white;
+}
+
+.menu-tab-btn:not(.active) {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.menu-tab-btn:not(.active):hover {
+  background-color: #e0e0e0;
+}
+
+/* Empty Categories View */
+.empty-categories-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  border-radius: 8px;
+  padding: 60px 20px;
+  width: 100%;
+  height: 100%;
+  margin-top: 20px;
+}
+
+.empty-categories-message {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+
+.create-categories-btn {
+  background-color: #6a0dad;
+  color: white;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 10px 20px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-categories-btn:hover {
+  opacity: 0.9;
+}
+
+/* Add Category/Item Top Button */
+.add-category-top-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.add-category-butttons {
+  font-family: 'Inter', sans-serif;
+  background-color: #DAFBE8;
+  color: #000000;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 12px 30px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.add-category-butttons:hover {
+  background-color: #adf3b8;
+}
+
+/* Categories Container */
+.categories-container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Categories Header */
+.categories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.categories-title {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+  text-align: left;
+}
+
+.categories-column-headers {
+  display: flex;
+  align-items: center;
+  gap: 65px;
+  justify-content: flex-end;
+  width: 50%;
+}
+
+.category-parent-header {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+  width: 200px;
+  text-align: center;
+}
+
+.actions-header {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+  width: 100px;
+  text-align: center;
+}
+
+/* Categories List */
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.category-row, .subcategory-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.category-row {
+  background-color: #f9f9f9;
+}
+
+.subcategory-row {
+  background-color: #fef1f1;
+}
+
+.category-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 50%;
+}
+
+.category-id {
+  color: #666;
+  font-size: 0.85rem;
+  min-width: 20px;
+}
+
+.category-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.sub-label {
+  background-color: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #666;
+  margin-left: 5px;
+}
+
+.category-details {
+  display: flex;
+  align-items: center;
+  gap: 65px;
+  justify-content: flex-end;
+  width: 50%;
+}
+
+.parent-dropdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 0.85rem;
+  border-radius: 1.5rem;
+  background-color: #b7dff9;
+  padding: 3px 15px;
+  gap: 10px;
+}
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  color: #999;
+  display: flex;
+  align-items: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 5px;
+  width: 100px;
+  justify-content: center;
+}
+
+.edit-button, .delete-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+.edit-button:hover {
+  color: #3498db;
+}
+
+.delete-button:hover {
+  color: #e74c3c;
+}
+
+/* Add Category/Item Form Container */
+.add-category-form-container,
+.add-item-form-container {
+  background-color: white;
+  border-radius: 8px;
+  width: 100%;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+/* Items Container */
+.items-container {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 10px 15px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Items Controls - Outside Table Area */
+.items-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 7px 0;
+  width: 100%;
+}
+
+.items-controls-left {
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  align-items: center;
+}
+
+.item-delete-btn {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.items-search {
+  width: auto;
+}
+
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #000000;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+.search-input {
+  background-color: #ffffff;
+  padding: 10px 15px 10px 40px;
+  border: none;
+  border-radius: 15px;
+  width: 300px;
+  font-size: 0.9rem;
+}
+
+/* Removed .items-filters class as it's no longer needed */
+
+.bulk-actions-btn,
+.filter-btn {
+  background-color: #ffffff;
+  color: #827b7b;
+  border: none;
+  border-radius: 15px;
+  padding: 10px 15px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  
+}
+
+.filter-icon {
+  font-weight: bold;
+}
+
+/* Items Table */
+.items-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  table-layout: fixed;
+  background-color: transparent;
+}
+
+.items-table th,
+.items-table td {
+  padding: 12px 15px;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 0.9rem;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.items-table th {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+  background-color: transparent;
+  border-bottom: none !important;
+  border-top: none !important;
+}
+
+.checkbox-column {
+  width: 40px;
+  padding-right: 0;
+  padding-left: 10px;
+}
+
+.sr-column {
+  width: 50px;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: normal;
+  padding-left: 0;
+}
+
+.item-name-column {
+  width: 25%;
+}
+
+.status-column {
+  width: 15%;
+}
+
+.categories-column {
+  width: 20%;
+}
+
+.actions-column {
+  width: 10%;
+  text-align: center;
+}
+
+/* Table row styling */
+.items-table tbody tr {
+  background-color: #F9F9F9;
+  margin: 8px 0;
+  border-radius: 10px;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.items-table tbody tr:hover {
+  background-color: #ffffff;
+}
+
+/* Ensure proper alignment of all table cells */
+.items-table tbody td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-color: #f8f9fa;
+  transition: background-color 0.2s ease;
+}
+
+.items-table tbody tr:hover td {
+  background-color: #f3f3f3;
+}
+
+/* Add rounded corners to first and last cells */
+.items-table tbody tr td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+.items-table tbody tr td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.item-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.item-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.item-name {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.95rem;
+}
+
+.status-dropdown {
+  color: #868c99;
+  padding: 2px 10px;
+  border-radius: 30px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  background-color: #b7f7c2;
+  border: none;
+  cursor: pointer;
+  width: 100px;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.status-dropdown:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(183, 247, 194, 0.5);
+}
+
+.status-dropdown option {
+  background-color: rgb(219, 211, 211);
+  color: #333;
+  padding: 10px;
+  font-weight: 500;
+
+}
+
+/* Custom dropdown styling */
+select.status-dropdown::-ms-expand {
+  display: none;
+}
+
+/* Style for dropdown when open */
+.status-dropdown option:hover,
+.status-dropdown option:focus,
+.status-dropdown option:active,
+.status-dropdown option:checked {
+  color: #333 !important;
+}
+
+.active {
+  background-color: #DAFBE8;
+  color: #2f5d38;
+}
+
+.disabled {
+  background-color: #ffd7d7;
+  color: #c62828;
+}
+
+.active-status-icon {
+  position: relative;
+  right: 30px;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.category-badge {
+  background-color: #f0f0f0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.item-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  align-items: center;
+}
+
+.item-edit-btn,
+.item-delete-btn {
+  background: transparent !important;
+  border: none;
+  cursor: pointer;
+  color: #7d6c6c !important;
+  font-size: 0.9rem;
+  padding: 4px 8px !important;
+  transition: all 0.2s;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header {
+    padding-top: 50px;
+  }
+  
+  .overview-title {
+    font-size: 1.4rem;
+  }
+  
+  .menu-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 10px;
+  }
+  
+  .menu-tab-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+  
+  .items-controls {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .items-controls-left {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .items-controls-right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .items-search {
+    width: 100%;
+  }
+  
+  .categories-column-headers {
+    display: none;
+  }
+  
+  .category-row, .subcategory-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .category-info, .category-details {
+    width: 100%;
+  }
+  
+  .category-details {
+    justify-content: space-between;
+  }
+}

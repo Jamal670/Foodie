@@ -1,0 +1,169 @@
+/* Forget Password / Reset Password Specific Styles */
+
+.forget-pass-card {
+  max-width: 450px;
+}
+
+/* ===== Forget Email Form Styles ===== */
+.forget-email-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.forget-email-title {
+  color: #1a1a1a;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+}
+
+.forget-email-subtitle {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #666666;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+.forget-email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.forget-email-btn {
+  margin-top: 0.3rem;
+}
+
+.forget-back-link {
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* ===== Reset Pass Confirmation Styles ===== */
+.reset-pass-confirmation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.confirmation-icon {
+  font-size: 3.5rem;
+  color: #10b981;
+  margin-bottom: 0.5rem;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.confirmation-title {
+  color: #1a1a1a;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.confirmation-message {
+  font-size: 0.85rem;
+  color: #666666;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.confirmation-email {
+  font-size: 0.9rem;
+  color: #7911C3;
+  font-weight: 600;
+  margin: 0.25rem 0;
+  word-break: break-all;
+  padding: 0 1rem;
+}
+
+.confirmation-info {
+  font-size: 0.75rem;
+  color: #999999;
+  line-height: 1.5;
+  margin: 0.5rem 0;
+  padding: 0 1rem;
+}
+
+.resend-link {
+  color: #7911C3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.resend-link:hover {
+  color: #5a0d95;
+  text-decoration: underline;
+}
+
+.confirmation-btn {
+  margin-top: 0.5rem;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Desktop - Increased Width */
+@media (min-width: 1024px) {
+  .forget-pass-card {
+    max-width: 550px;
+  }
+
+  .forget-pass-title {
+    font-size: 1.35rem;
+  }
+
+  .forget-pass-subtitle {
+    font-size: 0.8rem;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .forget-pass-title {
+    font-size: 1.1rem;
+  }
+
+  .forget-pass-subtitle {
+    font-size: 0.7rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .forget-pass-title {
+    font-size: 1rem;
+  }
+
+  .forget-pass-subtitle {
+    font-size: 0.65rem;
+    margin-bottom: 1rem;
+  }
+
+  .password-error {
+    font-size: 0.65rem;
+  }
+}
+

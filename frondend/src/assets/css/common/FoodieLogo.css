@@ -1,0 +1,27 @@
+/* FoodieLogo.css */
+
+.foodie-logo {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  background: linear-gradient(to bottom, #9146d8 30%, #000000);
+  border: 2px #9146d8 transparent;
+  border-radius: 15px;
+  padding: 15px 05px;
+  color: #f6f5f5;
+  width: fit-content;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  font-family: 'Inter', sans-serif;
+}
+
+.foodie-logo.text-variant {
+  background: none;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  color: #9146d8;
+  font-size: 1rem;
+  margin-bottom: 0;
+  width: auto;
+  text-align: left;
+}
