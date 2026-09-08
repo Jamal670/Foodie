@@ -11,10 +11,15 @@ import { Customer } from './entity/customer.entity';
 import { MenuCategoryService } from 'src/menu/menu-category/menu-category.service';
 import { MenuItemsService } from 'src/menu/menu-items/menu-items/menu-items.service';
 import { ResturantService } from 'src/resturants/resturant/resturant.service';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { TableStatus, QrType } from 'src/table-module/table/entity/enums/enums';
+import * as bcrypt from 'bcrypt';
 
-describe('Customer QR Scan Module', () => {
+describe('Customer Architecture & Auth Refactor', () => {
   let resolver: CustomerResolver;
   let service: CustomerService;
   let tableService: TableService;
@@ -25,6 +30,15 @@ describe('Customer QR Scan Module', () => {
   let menuItemsService: MenuItemsService;
   let resturantService: ResturantService;
 
+  const mockCustomerRecord = {
+    id: 101,
+    tableId: 5,
+    branchId: 3,
+    sessionId: 7,
+    isActive: true,
+    token: '$2b$10$hashedtoken',
+  };
+
   const mockQueryRunner = {
     connect: jest.fn(),
     startTransaction: jest.fn(),
@@ -32,28 +46,41 @@ describe('Customer QR Scan Module', () => {
     rollbackTransaction: jest.fn(),
     release: jest.fn(),
     manager: {
-      save: jest.fn(),
+      save: jest.fn().mockImplementation((val) => Promise.resolve(val)),
       getRepository: jest.fn().mockImplementation(() => ({
-        create: jest
+        create: jest.fn().mockImplementation((val) => ({ id: 101, ...val })),
+        save: jest
           .fn()
-          .mockReturnValue({ id: 55, name: 'Guest', tableId: 5, branchId: 3 }),
-        save: jest.fn().mockResolvedValue({
-          id: 55,
-          name: 'Guest',
-          tableId: 5,
-          branchId: 3,
-        }),
+          .mockImplementation((val) => Promise.resolve({ id: 101, ...val })),
+        findOne: jest.fn(),
       })),
     },
   };
 
-  const mockDataSource = {
-    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+  const mockSessionRepo = {
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockTableRepo = {
+    findOne: jest.fn(),
+    save: jest.fn(),
   };
 
   const mockCustomerRepository = {
-    create: jest.fn(),
-    save: jest.fn(),
+    create: jest.fn().mockImplementation((val) => ({ id: 101, ...val })),
+    save: jest.fn().mockImplementation((val) => Promise.resolve({ id: 101, ...val })),
+    findOne: jest.fn(),
+  };
+
+  const mockDataSource = {
+    createQueryRunner: jest.fn().mockReturnValue(mockQueryRunner),
+    getRepository: jest.fn().mockImplementation((entity) => {
+      if (entity.name === 'TableSession') return mockSessionRepo;
+      if (entity.name === 'Table') return mockTableRepo;
+      return mockCustomerRepository;
+    }),
   };
 
   beforeEach(async () => {
@@ -75,7 +102,7 @@ describe('Customer QR Scan Module', () => {
           provide: TableSectionService,
           useValue: {
             findOrCreateSession: jest.fn(),
-            verifySessionToken: jest.fn(),
+            getSaltValue: jest.fn().mockReturnValue(10),
           },
         },
         {
@@ -99,13 +126,14 @@ describe('Customer QR Scan Module', () => {
         {
           provide: JwtService,
           useValue: {
-            sign: jest.fn().mockReturnValue('mocked_jwt_token'),
+            sign: jest.fn().mockReturnValue('valid_raw_jwt_token'),
+            verify: jest.fn(),
           },
         },
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn().mockReturnValue('mock_secret'),
+            get: jest.fn().mockReturnValue('mock_customer_secret'),
           },
         },
         {
@@ -143,220 +171,153 @@ describe('Customer QR Scan Module', () => {
         input,
         'mock_agent',
         undefined,
+        undefined,
       );
       expect(result).toBe(expectedResponse);
     });
   });
 
-  describe('CustomerService', () => {
-    it('should orchestrate successful scan successfully', async () => {
-      const qrToken = 'token_abc';
-      const mockTable = {
-        id: 5,
-        restaurantId: 1,
-        branchId: 3,
-        qrToken,
-        qrType: QrType.DINE_IN,
-        status: TableStatus.AVAILABLE,
+  describe('Section 22 Expectations & Architectural Tests', () => {
+    it('1. Concurrent QR scans: race-safe recovery on unique violation (code 23505)', async () => {
+      const mockRepo = {
+        findOne: jest.fn(),
+        create: jest.fn().mockReturnValue({ tableId: 5, isActive: true }),
+        save: jest
+          .fn()
+          .mockRejectedValueOnce({ code: '23505', message: 'UQ_one_active_session_per_table' }),
       };
-      const mockSession = {
-        id: 15,
-        tableId: 5,
-        token: 'session_xyz',
-        isActive: true,
-        expiresAt: new Date(),
-      };
-      const mockRestaurant = { id: 1, restName: 'Burger Hub' };
-      const mockCategories = [{ id: 1, name: 'Burgers' }];
-      const mockMenuItems = [{ id: 1, name: 'Beef Burger' }];
 
-      jest
-        .spyOn(tableService, 'validateQrToken')
-        .mockResolvedValue(mockTable as any);
-      jest.spyOn(tableSectionService, 'findOrCreateSession').mockResolvedValue({
-        session: mockSession as any,
-        isNew: true,
-        accessToken: 'mocked_jwt_token',
-      });
-      jest
-        .spyOn(menuCategoryService, 'getCategories')
-        .mockResolvedValue(mockCategories as any);
-      jest
-        .spyOn(menuItemsService, 'getMenuItems')
-        .mockResolvedValue(mockMenuItems as any);
-      jest
-        .spyOn(resturantService, 'findResturantById')
-        .mockResolvedValue(mockRestaurant as any);
-
-      const response = await service.scanQrCode({ qrToken }, 'mock_agent');
-
-      // Check transaction flows
-      expect(tableService.validateQrToken).toHaveBeenCalledWith(qrToken);
-      expect(tableSectionService.findOrCreateSession).toHaveBeenCalledWith(
-        5,
-        1,
-        3,
-        'mock_agent',
-        mockQueryRunner.manager,
+      const tableSectionSvc = new TableSectionService(
+        mockRepo as any,
+        configService,
       );
-      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
-        expect.objectContaining({ id: 5, status: TableStatus.OCCUPIED }),
-      );
-      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
 
-      // Check Menu query parallelism
-      expect(menuCategoryService.getCategories).toHaveBeenCalledWith(1);
-      expect(menuItemsService.getMenuItems).toHaveBeenCalledWith(1);
-      expect(resturantService.findResturantById).toHaveBeenCalledWith(1);
+      // Second findOne after race error returns existing active session
+      const existingSession = { id: 7, tableId: 5, isActive: true };
+      mockRepo.findOne
+        .mockResolvedValueOnce(null) // first check
+        .mockResolvedValueOnce(existingSession); // re-fetch after 23505 race
 
-      // Check response mapping
-      expect(response).toEqual({
-        accessToken: 'mocked_jwt_token',
-        session: mockSession,
-        restaurant: mockRestaurant,
-        categories: mockCategories,
-        menuItems: mockMenuItems,
-      });
+      const result = await tableSectionSvc.findOrCreateSession(5, 1, 3);
+      expect(result).toEqual({ session: existingSession, isNew: false });
     });
 
-    it('should rollback transaction if repository operations fail', async () => {
-      jest
-        .spyOn(tableService, 'validateQrToken')
-        .mockRejectedValue(new Error('Validate Failed'));
+    it('2. Multiple customers (A and B) under same TableSession remain independently valid', async () => {
+      const mockTable = { id: 5, restaurantId: 1, branchId: 3, status: TableStatus.OCCUPIED };
+      const mockSession = { id: 7, tableId: 5, restaurantId: 1, branchId: 3, isActive: true };
+      const mockCustomerA = { id: 101, sessionId: 7, tableId: 5, branchId: 3, isActive: true, token: await bcrypt.hash('tokenA', 10) };
+      const mockCustomerB = { id: 102, sessionId: 7, tableId: 5, branchId: 3, isActive: true, token: await bcrypt.hash('tokenB', 10) };
 
-      await expect(service.scanQrCode({ qrToken: 'invalid' })).rejects.toThrow(
-        'Validate Failed',
-      );
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
-      expect(mockQueryRunner.release).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException if restaurant is not found when loading menu', async () => {
-      const mockTable = { id: 5, restaurantId: 1, branchId: 3 };
-      const mockSession = { id: 15 };
-
-      jest
-        .spyOn(tableService, 'validateQrToken')
-        .mockResolvedValue(mockTable as any);
-      jest.spyOn(tableSectionService, 'findOrCreateSession').mockResolvedValue({
-        session: mockSession as any,
-        isNew: false,
-        accessToken: 'mocked_jwt_token',
-      });
-      jest.spyOn(menuCategoryService, 'getCategories').mockResolvedValue([]);
-      jest.spyOn(menuItemsService, 'getMenuItems').mockResolvedValue([]);
-      jest.spyOn(resturantService, 'findResturantById').mockResolvedValue(null);
-
-      await expect(service.scanQrCode({ qrToken: 'token' })).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it('should throw BadRequestException if table is OutOfService', async () => {
-      const mockTable = {
-        id: 5,
-        restaurantId: 1,
-        branchId: 3,
-        status: TableStatus.OUT_OF_SERVICE,
-      };
-      jest
-        .spyOn(tableService, 'validateQrToken')
-        .mockResolvedValue(mockTable as any);
-
-      await expect(service.scanQrCode({ qrToken: 'token' })).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
-    });
-
-    it('should not update status if table is Reserved', async () => {
-      const mockTable = {
-        id: 5,
-        restaurantId: 1,
-        branchId: 3,
-        status: TableStatus.RESERVED,
-      };
-      const mockSession = { id: 15, isActive: true };
-      const mockRestaurant = { id: 1 };
-
-      jest
-        .spyOn(tableService, 'validateQrToken')
-        .mockResolvedValue(mockTable as any);
-      jest.spyOn(tableSectionService, 'findOrCreateSession').mockResolvedValue({
-        session: mockSession as any,
-        isNew: true,
-        accessToken: 'mocked_jwt_token',
-      });
-      jest.spyOn(menuCategoryService, 'getCategories').mockResolvedValue([]);
-      jest.spyOn(menuItemsService, 'getMenuItems').mockResolvedValue([]);
-      jest
-        .spyOn(resturantService, 'findResturantById')
-        .mockResolvedValue(mockRestaurant as any);
-
-      await service.scanQrCode({ qrToken: 'token' });
-
-      // Ensure save is not called on the table status update
-      expect(mockQueryRunner.manager.save).not.toHaveBeenCalledWith(
-        expect.objectContaining({ status: TableStatus.OCCUPIED }),
-      );
-    });
-
-    it('should reuse existing session and skip customer creation and status updates if a valid accessToken is provided (Case B)', async () => {
-      const mockTable = {
-        id: 5,
-        restaurantId: 1,
-        branchId: 3,
-        status: TableStatus.AVAILABLE,
-      };
-      const mockSession = { id: 15, isActive: true };
-      const mockRestaurant = { id: 1 };
-      const mockCustomer = { id: 55, sessionId: 15 };
-
-      jest
-        .spyOn(tableService, 'validateQrToken')
-        .mockResolvedValue(mockTable as any);
-      jest.spyOn(tableSectionService, 'verifySessionToken').mockResolvedValue({
-        sessionId: 15,
-        restaurantId: 1,
-        branchId: 3,
-        tableId: 5,
-        session: mockSession as any,
+      jest.spyOn(jwtService, 'verify').mockImplementation((token: string) => {
+        if (token === 'tokenA') return { customerId: 101, sessionId: 7, tableId: 5, restaurantId: 1, branchId: 3 };
+        if (token === 'tokenB') return { customerId: 102, sessionId: 7, tableId: 5, restaurantId: 1, branchId: 3 };
+        throw new Error('Invalid token');
       });
 
-      // Stub save and findOne for EntityManager
-      mockQueryRunner.manager.getRepository = jest
-        .fn()
-        .mockImplementation(() => ({
-          findOne: jest.fn().mockResolvedValue(mockCustomer),
-          create: jest.fn(),
-          save: jest.fn(),
-        }));
+      mockCustomerRepository.findOne.mockImplementation(({ where }: any) => {
+        if (where.id === 101) return Promise.resolve(mockCustomerA);
+        if (where.id === 102) return Promise.resolve(mockCustomerB);
+        return Promise.resolve(null);
+      });
 
-      jest.spyOn(menuCategoryService, 'getCategories').mockResolvedValue([]);
-      jest.spyOn(menuItemsService, 'getMenuItems').mockResolvedValue([]);
-      jest
-        .spyOn(resturantService, 'findResturantById')
-        .mockResolvedValue(mockRestaurant as any);
+      mockSessionRepo.findOne.mockResolvedValue(mockSession);
+      mockTableRepo.findOne.mockResolvedValue(mockTable);
 
-      const response = await service.scanQrCode(
-        { qrToken: 'token' },
-        'mock_agent',
-        'valid_token',
-      );
+      // Validate Customer A
+      const ctxA = await service.validateCustomerToken('tokenA');
+      expect(ctxA.customer.id).toBe(101);
 
-      // verifySessionToken should have been checked
-      expect(tableSectionService.verifySessionToken).toHaveBeenCalledWith(
-        'valid_token',
-        mockQueryRunner.manager,
-      );
-      // findOrCreateSession should NOT have been called
+      // Validate Customer B
+      const ctxB = await service.validateCustomerToken('tokenB');
+      expect(ctxB.customer.id).toBe(102);
+
+      // Both belong to session 7
+      expect(ctxA.session.id).toBe(7);
+      expect(ctxB.session.id).toBe(7);
+    });
+
+    it('3. Invalid or expired token throws UnauthorizedException (HARD FAILURE, no fallback)', async () => {
+      jest.spyOn(jwtService, 'verify').mockImplementation(() => {
+        throw new Error('jwt expired');
+      });
+
+      await expect(
+        service.scanQrCode({ qrToken: 'valid_table_qr' }, 'agent', 'expired_token'),
+      ).rejects.toThrow(UnauthorizedException);
+
+      // Ensure findOrCreateSession was NOT called (no fallback customer creation!)
       expect(tableSectionService.findOrCreateSession).not.toHaveBeenCalled();
-      // No table status updates should have occurred
-      expect(mockQueryRunner.manager.save).not.toHaveBeenCalledWith(
-        expect.objectContaining({ status: TableStatus.OCCUPIED }),
-      );
+    });
 
-      expect(response.accessToken).toBe('valid_token');
+    it('4. Token validation rejects token whose customerId belongs to a different session or table', async () => {
+      jest.spyOn(jwtService, 'verify').mockReturnValue({
+        customerId: 101,
+        sessionId: 7,
+        tableId: 99, // Mismatched tableId in payload
+        restaurantId: 1,
+        branchId: 3,
+      });
+
+      const mockCustomer = { id: 101, sessionId: 7, isActive: true, token: await bcrypt.hash('token123', 10) };
+      const mockSession = { id: 7, tableId: 5, restaurantId: 1, branchId: 3, isActive: true }; // session tableId is 5, payload has 99
+
+      mockCustomerRepository.findOne.mockResolvedValue(mockCustomer);
+      mockSessionRepo.findOne.mockResolvedValue(mockSession);
+
+      await expect(service.validateCustomerToken('token123')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('5. Two-step transaction flow: isActive=false / token=null customer is rejected', async () => {
+      jest.spyOn(jwtService, 'verify').mockReturnValue({
+        customerId: 101,
+        sessionId: 7,
+        tableId: 5,
+        restaurantId: 1,
+        branchId: 3,
+      });
+
+      // Half-created customer (isActive = false, token = null)
+      const inactiveCustomer = { id: 101, sessionId: 7, isActive: false, token: null };
+      mockCustomerRepository.findOne.mockResolvedValue(inactiveCustomer);
+
+      await expect(service.validateCustomerToken('some_token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('6. First-time customer with missing, undefined, null, or empty string token executes new scan flow without validating token', async () => {
+      const mockTable = { id: 5, restaurantId: 1, branchId: 3, status: TableStatus.AVAILABLE };
+      const mockSession = { id: 7, tableId: 5, restaurantId: 1, branchId: 3, isActive: true };
+
+      jest.spyOn(tableService, 'validateQrToken').mockResolvedValue(mockTable as any);
+      jest.spyOn(tableSectionService, 'findOrCreateSession').mockResolvedValue({
+        session: mockSession as any,
+        isNew: true,
+      });
+      jest.spyOn(menuCategoryService, 'getCategories').mockResolvedValue([]);
+      jest.spyOn(menuItemsService, 'getMenuItems').mockResolvedValue([]);
+      jest.spyOn(resturantService, 'findResturantById').mockResolvedValue({ id: 1 } as any);
+
+      const validateSpy = jest.spyOn(service, 'validateCustomerToken');
+
+      // Test with undefined, "undefined", "null", and empty whitespace
+      const tokensToTest = [undefined, '', '   ', 'undefined', 'null'];
+
+      for (const token of tokensToTest) {
+        validateSpy.mockClear();
+        const response = await service.scanQrCode(
+          { qrToken: 'valid_qr_123' },
+          'User-Agent-Mock',
+          token,
+        );
+
+        expect(validateSpy).not.toHaveBeenCalled();
+        expect(response.accessToken).toBe('valid_raw_jwt_token');
+        expect(response.session.id).toBe(7);
+      }
     });
   });
 });
+

@@ -2,11 +2,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, DataSource } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 
 import { Customer } from './entity/customer.entity';
 import { MenuCategoryService } from 'src/menu/menu-category/menu-category.service';
@@ -23,6 +25,12 @@ import { Table } from 'src/table-module/table/entity/table.entity';
 import { Restaurant } from 'src/resturants/resturant/entity/resturant.entity';
 import { MenuCategory } from 'src/menu/menu-category/Entity/createMenuCategory.entity';
 import { MenuItem } from 'src/menu/menu-items/menu-items/entity/createMenuItems.entity';
+
+export interface ValidatedCustomerContext {
+  customer: Customer;
+  session: TableSession;
+  table: Table;
+}
 
 @Injectable()
 export class CustomerService {
@@ -44,12 +52,44 @@ export class CustomerService {
     input: ScanQrInput,
     userAgent?: string,
     accessToken?: string,
+    deviceId?: string,
   ): Promise<CustomerScanResponse> {
+    const cleanToken =
+      accessToken &&
+      typeof accessToken === 'string' &&
+      accessToken.trim() !== '' &&
+      accessToken.trim() !== 'undefined' &&
+      accessToken.trim() !== 'null'
+        ? accessToken.trim()
+        : undefined;
+
+    // 1. If Access Token is present -> Existing Customer Flow (HARD FAILURE on invalid token)
+    if (cleanToken) {
+      const verifiedContext = await this.validateCustomerToken(cleanToken);
+
+      // Validate QR code table matches verified context table
+      const table = await this.validateTable(input.qrToken);
+      if (!table || table.id !== verifiedContext.table.id) {
+        throw new BadRequestException('Table QR code does not match session.');
+      }
+
+      const menuData = await this.loadRestaurantMenu(table.restaurantId);
+      return this.buildResponse(
+        cleanToken,
+        verifiedContext.session,
+        menuData.restaurant,
+        menuData.categories,
+        menuData.menuItems,
+      );
+    }
+
+    // 2. New Scan / No Token Flow
+    const effectiveDeviceId = input.deviceId || deviceId;
     const {
       table,
       session,
       accessToken: finalAccessToken,
-    } = await this.executeTransaction(input.qrToken, userAgent, accessToken);
+    } = await this.executeNewScanFlow(input.qrToken, userAgent, effectiveDeviceId);
 
     const menuData = await this.loadRestaurantMenu(table.restaurantId);
 
@@ -62,206 +102,201 @@ export class CustomerService {
     );
   }
 
-  //*-*-*-*-*-*-*-*-*-*-* Private Functions *-*-*-*-*-*-*-*-*-*-*
-  // ==================== executeTransaction ====================
-  private async executeTransaction(
+  // ==================== Section 13: Unified Authentication Core ====================
+  async validateCustomerToken(
+    accessToken: string,
+    entityManager?: EntityManager,
+  ): Promise<ValidatedCustomerContext> {
+    let payload: any;
+    try {
+      const secret = this.configService.get<string>('CUSTOMER_ACCESS_TOKEN');
+      payload = this.jwtService.verify(accessToken, { secret });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired customer token.');
+    }
+
+    if (!payload || !payload.customerId || !payload.sessionId) {
+      throw new UnauthorizedException('Invalid token payload structure.');
+    }
+
+    const customerRepo = entityManager
+      ? entityManager.getRepository(Customer)
+      : this.customerRepository;
+
+    const customer = await customerRepo.findOne({
+      where: { id: payload.customerId, sessionId: payload.sessionId },
+    });
+
+    if (!customer || !customer.isActive || !customer.token) {
+      throw new UnauthorizedException(
+        'Customer account is inactive or not found.',
+      );
+    }
+
+    const isMatch = await bcrypt.compare(accessToken, customer.token);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid or expired customer token.');
+    }
+
+    const sessionRepo = entityManager
+      ? entityManager.getRepository(TableSession)
+      : this.dataSource.getRepository(TableSession);
+
+    const session = await sessionRepo.findOne({
+      where: { id: payload.sessionId },
+    });
+
+    if (!session || !session.isActive) {
+      throw new UnauthorizedException('Dining session is inactive or closed.');
+    }
+
+    const isExpired = session.expiresAt && new Date() > session.expiresAt;
+    if (isExpired) {
+      throw new UnauthorizedException('Dining session has expired.');
+    }
+
+    if (
+      session.tableId !== payload.tableId ||
+      session.restaurantId !== payload.restaurantId ||
+      session.branchId !== payload.branchId ||
+      (customer.tableId !== undefined && customer.tableId !== payload.tableId) ||
+      (customer.branchId !== undefined && customer.branchId !== payload.branchId) ||
+      (customer.sessionId !== undefined && customer.sessionId !== payload.sessionId)
+    ) {
+      throw new UnauthorizedException('Session context mismatch.');
+    }
+
+    const tableRepo = entityManager
+      ? entityManager.getRepository(Table)
+      : this.dataSource.getRepository(Table);
+
+    const table = await tableRepo.findOne({ where: { id: session.tableId } });
+    if (!table) {
+      throw new UnauthorizedException('Table not found.');
+    }
+
+    if (table.status === TableStatus.OUT_OF_SERVICE) {
+      throw new BadRequestException('Table is out of service.');
+    }
+
+    return { customer, session, table };
+  }
+
+  // ==================== Private New Scan Flow (Section 9) ====================
+  private async executeNewScanFlow(
     qrToken: string,
     userAgent?: string,
-    accessToken?: string,
+    deviceId?: string,
   ): Promise<{
     table: Table;
     session: TableSession;
     customer: Customer;
     accessToken: string;
   }> {
+    const table = await this.validateTable(qrToken);
+    if (!table) {
+      throw new NotFoundException('Table not found or invalid QR code.');
+    }
+
+    if (table.status === TableStatus.OUT_OF_SERVICE) {
+      throw new BadRequestException('Table is out of service.');
+    }
+
+    // Step 1: Short DB Transaction (NO bcrypt inside transaction)
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    let session: TableSession;
+    let customer: Customer | undefined;
+
     try {
       const entityManager = queryRunner.manager;
 
-      // 1. Check for Access Token (Case B)
-      if (accessToken) {
-        try {
-          const verified = await this.tableSectionService.verifySessionToken(
-            accessToken,
-            entityManager,
-          );
-          if (verified) {
-            // Validate table QR token again first
-            const table = await this.validateTable(qrToken);
-            if (!table) {
-              throw new NotFoundException(
-                'Table not found or invalid QR code.',
-              );
-            }
+      // Find or create active table session (handles Postgres 23505 race condition)
+      const sessionResult =
+        await this.tableSectionService.findOrCreateSession(
+          table.id,
+          table.restaurantId,
+          table.branchId,
+          userAgent,
+          entityManager,
+        );
+      session = sessionResult.session;
 
-            if (table.status === TableStatus.OUT_OF_SERVICE) {
-              throw new BadRequestException('Table is out of service.');
-            }
+      if (sessionResult.isNew && table.status === TableStatus.AVAILABLE) {
+        table.status = TableStatus.OCCUPIED;
+        await entityManager.save(table);
+      }
 
-            // Target extra verification
-            if (
-              table.id !== verified.tableId ||
-              table.restaurantId !== verified.restaurantId ||
-              table.branchId !== verified.branchId
-            ) {
-              throw new BadRequestException('Invalid table session context.');
-            }
-
-            // Find customer record associated with this session
-            let customer = await entityManager.getRepository(Customer).findOne({
-              where: { sessionId: verified.session.id },
-            });
-
-            // Fallback: in case customer was deleted/not found, create one
-            if (!customer) {
-              customer = await this.createCustomerRecord(
-                verified.session.id,
-                table.id,
-                table.branchId,
-                entityManager,
-              );
-            }
-
-            await queryRunner.commitTransaction();
-            return {
-              table,
-              session: verified.session,
-              customer,
-              accessToken,
-            };
-          }
-        } catch {
-          // If Token is Invalid: Continue with normal QR scan flow
+      // Section 14 Device Dedup check
+      if (deviceId) {
+        const existingCustomer = await entityManager
+          .getRepository(Customer)
+          .findOne({
+            where: {
+              sessionId: session.id,
+              deviceId,
+              isActive: true,
+            },
+          });
+        if (existingCustomer) {
+          customer = existingCustomer;
         }
       }
 
-      // 2. Case A / Normal Flow
-      // validateTable()
-      const table = await this.validateTable(qrToken);
-
-      if (!table) {
-        throw new NotFoundException('Table not found or invalid QR code.');
+      if (!customer) {
+        // Create customer record initially inactive with null token
+        const customerRepo = entityManager.getRepository(Customer);
+        customer = customerRepo.create({
+          sessionId: session.id,
+          tableId: table.id,
+          branchId: table.branchId,
+          deviceId,
+          isActive: false,
+          token: undefined,
+        });
+        customer = await customerRepo.save(customer);
       }
-
-      const {
-        session,
-        customer,
-        accessToken: newAccessToken,
-      } = await (async () => {
-        switch (table.status) {
-          case TableStatus.AVAILABLE:
-            return this.handleAvailableTable(table, userAgent, entityManager);
-          case TableStatus.OCCUPIED:
-          case TableStatus.RESERVED:
-          case TableStatus.CLEANING:
-            return this.handleSharedSessionTable(
-              table,
-              userAgent,
-              entityManager,
-            );
-          case TableStatus.OUT_OF_SERVICE:
-            return this.handleOutOfServiceTable();
-          default:
-            return this.handleSharedSessionTable(
-              table,
-              userAgent,
-              entityManager,
-            );
-        }
-      })();
 
       await queryRunner.commitTransaction();
-      return { table, session, customer, accessToken: newAccessToken };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
     } finally {
       await queryRunner.release();
     }
-  }
 
-  // ==================== Table Status Handlers ====================
+    // Step 2: Outside Transaction (JWT generation + bcrypt hash)
+    const payload = {
+      customerId: customer.id,
+      sessionId: session.id,
+      tableId: table.id,
+      restaurantId: table.restaurantId,
+      branchId: table.branchId,
+    };
+    const secret = this.configService.get<string>('CUSTOMER_ACCESS_TOKEN');
+    const rawAccessToken = this.jwtService.sign(payload, {
+      secret,
+      expiresIn: '2h',
+    });
 
-  private async handleAvailableTable(
-    table: Table,
-    userAgent: string | undefined,
-    entityManager: EntityManager,
-  ): Promise<{
-    session: TableSession;
-    customer: Customer;
-    accessToken: string;
-  }> {
-    const { session, isNew } = await this.findOrCreateSession(
+    const saltValue = this.tableSectionService.getSaltValue();
+    const hashedToken = await bcrypt.hash(rawAccessToken, saltValue);
+
+    // Step 3: Fast Update to activate customer with hashed token
+    customer.token = hashedToken;
+    customer.isActive = true;
+    await this.customerRepository.save(customer);
+
+    return {
       table,
-      userAgent,
-      entityManager,
-    );
-
-    const customer = await this.createCustomerRecord(
-      session.id,
-      table.id,
-      table.branchId,
-      entityManager,
-    );
-
-    if (isNew) {
-      await this.updateTableStatus(table, entityManager);
-    }
-
-    const accessToken =
-      await this.tableSectionService.registerCustomerConnection(
-        customer,
-        session,
-        table.restaurantId,
-        table.branchId,
-        table.id,
-        entityManager,
-      );
-
-    return { session, customer, accessToken };
+      session,
+      customer,
+      accessToken: rawAccessToken,
+    };
   }
 
-  private async handleSharedSessionTable(
-    table: Table,
-    userAgent: string | undefined,
-    entityManager: EntityManager,
-  ): Promise<{
-    session: TableSession;
-    customer: Customer;
-    accessToken: string;
-  }> {
-    const { session } = await this.findOrCreateSession(
-      table,
-      userAgent,
-      entityManager,
-    );
-
-    const customer = await this.createCustomerRecord(
-      session.id,
-      table.id,
-      table.branchId,
-      entityManager,
-    );
-
-    const accessToken =
-      await this.tableSectionService.registerCustomerConnection(
-        customer,
-        session,
-        table.restaurantId,
-        table.branchId,
-        table.id,
-        entityManager,
-      );
-
-    return { session, customer, accessToken };
-  }
-
-  private handleOutOfServiceTable(): never {
-    throw new BadRequestException('Table is out of service.');
-  }
 
   // ==================== validateTable ====================
   private async validateTable(
@@ -269,46 +304,6 @@ export class CustomerService {
     entityManager?: EntityManager,
   ): Promise<Table> {
     return this.tableService.validateQrToken(qrToken, entityManager);
-  }
-
-  // ==================== findOrCreateSession ====================
-  private async findOrCreateSession(
-    table: Table,
-    userAgent: string | undefined,
-    entityManager: EntityManager,
-  ): Promise<{ session: TableSession; isNew: boolean }> {
-    return this.tableSectionService.findOrCreateSession(
-      table.id,
-      table.restaurantId,
-      table.branchId,
-      userAgent,
-      entityManager,
-    );
-  }
-
-  // ==================== createCustomerRecord ====================
-  private async createCustomerRecord(
-    sessionId: number,
-    tableId: number,
-    branchId: number,
-    entityManager: EntityManager,
-  ): Promise<Customer> {
-    const repo = entityManager.getRepository(Customer);
-    const newCustomer = repo.create({
-      sessionId,
-      tableId,
-      branchId,
-    });
-    return await repo.save(newCustomer);
-  }
-
-  // ==================== updateTableStatus ====================
-  private async updateTableStatus(
-    table: Table,
-    entityManager: EntityManager,
-  ): Promise<void> {
-    table.status = TableStatus.OCCUPIED;
-    await entityManager.save(table);
   }
 
   // ==================== loadRestaurantMenu ====================
@@ -347,3 +342,4 @@ export class CustomerService {
     };
   }
 }
+

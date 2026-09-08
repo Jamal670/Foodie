@@ -2,17 +2,21 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToOne,
+  ManyToOne,
+  OneToMany,
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Field, ObjectType, Int } from '@nestjs/graphql';
 
 import { Table } from 'src/table-module/table/entity/table.entity';
+import { Customer } from 'src/customer/entity/customer.entity';
 
 @ObjectType()
 @Entity('table_sessions')
+@Index('IDX_table_sessions_table_id', ['tableId'])
 export class TableSession {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
@@ -35,14 +39,6 @@ export class TableSession {
   // ================= SESSION INFO =================
 
   @Field()
-  @Column()
-  token: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  deviceId?: string;
-
-  @Field()
   @Column({ default: true })
   isActive: boolean;
 
@@ -53,11 +49,15 @@ export class TableSession {
   // ================= RELATIONS =================
 
   @Field(() => Table)
-  @OneToOne(() => Table, (table) => table.session, {
+  @ManyToOne(() => Table, (table) => table.sessions, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'tableId' })
   table: Promise<Table>;
+
+  @Field(() => [Customer], { nullable: true })
+  @OneToMany(() => Customer, (customer) => customer.session)
+  customers: Promise<Customer[]>;
 
   // ================= TIMESTAMPS =================
 
@@ -68,4 +68,4 @@ export class TableSession {
   @Field()
   @UpdateDateColumn()
   updatedAt: Date;
-}
+}

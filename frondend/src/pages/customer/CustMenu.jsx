@@ -83,9 +83,25 @@ const CustMenu = () => {
           <Col>
             <div className="header-content">
               <div className="header-row">
-                <FoodieLogo style={{ marginBottom: "10px" }} />
-                <h1 className="restaurant-title">Chayé Khana</h1>
+                <div className="brand-section">
+                  <FoodieLogo className="foodie-logo" />
+                  <h1 className="restaurant-title">Chayé Khana</h1>
+                </div>
+
+                <div className="cart-wrapper">
+                  <img
+                    src="/images/grocery-store.png"
+                    alt="Shopping Cart"
+                    className="cart-image"
+                    onClick={() => navigate("/customer/menu-orders")}
+                  />
+
+                  <div className="cart-count">
+                    2
+                  </div>
+                </div>
               </div>
+
               <h2 className="menu-title">Menu</h2>
             </div>
           </Col>
@@ -95,7 +111,7 @@ const CustMenu = () => {
           {menuCategories.map((category) => (
             <div
               key={category.id}
-              className="category-card"
+              className="category-cards"
               style={{ gridArea: isMobile ? "auto" : category.gridArea }}
               onClick={() => handleCategoryClick(category.id, category.name)}
             >
@@ -105,8 +121,8 @@ const CustMenu = () => {
                   alt={category.name}
                   className="category-image"
                 />
-                <div className="category-overlay">
-                  <span className="category-name">{category.name}</span>
+                <div className="category-overlays">
+                  <span className="category-names">{category.name}</span>
                   <button
                     className="view-btn"
                     aria-label={`View ${category.name}`}

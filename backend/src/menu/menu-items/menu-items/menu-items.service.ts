@@ -28,7 +28,7 @@ export class MenuItemsService {
     private readonly itemAddonsService: ItemAddonsService,
     private readonly itemVariationService: ItemVariationService,
     private readonly itemCustomizationService: ItemCustomizationService,
-  ) {}
+  ) { }
 
   //======================== create menu Itmes ===========================
   async createMenuItem(
@@ -153,6 +153,9 @@ export class MenuItemsService {
     return this.dataSource.getRepository(MenuItem).find({
       where: {
         restaurantId,
+      },
+      relations: {
+        images: true,
       },
       order: {
         id: 'DESC',

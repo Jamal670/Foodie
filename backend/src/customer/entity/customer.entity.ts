@@ -11,6 +11,7 @@ import { Field, ObjectType, Int } from '@nestjs/graphql';
 
 import { Table } from 'src/table-module/table/entity/table.entity';
 import { Branch } from 'src/resturants/branch/entity/branch.entity';
+import { TableSession } from 'src/table-module/table-section/entity/tableSession.entity';
 
 @ObjectType()
 @Entity('customers')
@@ -51,6 +52,14 @@ export class Customer {
   @Column({ nullable: true })
   token?: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  deviceId?: string;
+
+  @Field()
+  @Column({ default: true })
+  isActive: boolean;
+
   // ================= RELATIONS =================
 
   @Field(() => Table)
@@ -67,6 +76,13 @@ export class Customer {
   @JoinColumn({ name: 'branchId' })
   branch: Promise<Branch>;
 
+  @Field(() => TableSession, { nullable: true })
+  @ManyToOne(() => TableSession, (session) => session.customers, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'sessionId' })
+  session: Promise<TableSession>;
+
   // ================= TIMESTAMPS =================
 
   @Field()
@@ -77,3 +93,4 @@ export class Customer {
   @UpdateDateColumn()
   updatedAt: Date;
 }
+

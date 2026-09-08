@@ -8,6 +8,7 @@ import { CustomerScanResponse } from './dto/customer-scan-response.dto';
 export class CustomerResolver {
   constructor(private readonly customerService: CustomerService) {}
 
+  //======================= Scan customer QR code =======================
   @Mutation(() => CustomerScanResponse)
   async scanQrCode(
     @Args('input') input: ScanQrInput,
@@ -16,6 +17,7 @@ export class CustomerResolver {
     const req = context.req;
     const res = context.res;
     const userAgent = req?.headers?.['user-agent'];
+    const deviceId = input.deviceId || (req?.headers?.['x-device-id'] as string);
 
     // 1. Read token: HttpOnly cookie first, then optional Bearer authorization fallback
     let accessToken = req?.cookies?.customer_access_token;
@@ -29,11 +31,22 @@ export class CustomerResolver {
       accessToken = authHeader.substring(7);
     }
 
+    if (
+      typeof accessToken !== 'string' ||
+      !accessToken.trim() ||
+      accessToken.trim() === 'undefined' ||
+      accessToken.trim() === 'null'
+    ) {
+      accessToken = undefined;
+    }
+
     const response = await this.customerService.scanQrCode(
       input,
       userAgent,
       accessToken,
+      deviceId,
     );
+
 
     // 2. Set HttpOnly cookie if customer access token is returned
     if (response?.accessToken && res) {

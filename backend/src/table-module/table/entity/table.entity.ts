@@ -6,7 +6,6 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
   OneToMany,
 } from 'typeorm';
 import { Field, ObjectType, Int } from '@nestjs/graphql';
@@ -79,9 +78,9 @@ export class Table {
   @JoinColumn({ name: 'branchId' })
   branch: Promise<Branch>;
 
-  @Field(() => TableSession, { nullable: true })
-  @OneToOne(() => TableSession, (session) => session.table)
-  session: Promise<TableSession>;
+  @Field(() => [TableSession], { nullable: true })
+  @OneToMany(() => TableSession, (session) => session.table)
+  sessions: Promise<TableSession[]>;
 
   @Field(() => [Customer], { nullable: true })
   @OneToMany(() => Customer, (customer) => customer.table)

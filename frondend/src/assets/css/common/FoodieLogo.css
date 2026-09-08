@@ -1,27 +1,58 @@
 /* FoodieLogo.css */
 
 .foodie-logo {
-  font-size: 0.9rem;
+  /* Responsive text */
+  font-size: clamp(0.65rem, 1.5vw, 0.9rem);
+
   font-weight: 600;
   text-align: center;
+
   background: linear-gradient(to bottom, #9146d8 30%, #000000);
-  border: 2px #9146d8 transparent;
-  border-radius: 15px;
-  padding: 15px 05px;
+
+  border: 2px solid #9146d8;
+  border-radius: clamp(8px, 1.2vw, 15px);
+
+  /* Responsive width */
+  width: clamp(45px, 6vw, 70px);
+
+  /* EXACTLY same as width */
+  aspect-ratio: 1 / 1;
+
+  /* Responsive padding */
+  padding: clamp(5px, 0.8vw, 10px);
+
   color: #f6f5f5;
-  width: fit-content;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+
   font-family: 'Inter', sans-serif;
+
+  flex-shrink: 0;
 }
 
+
+/* Text Variant */
 .foodie-logo.text-variant {
   background: none;
   box-shadow: none;
   border: none;
+
   padding: 0;
+
   color: #9146d8;
-  font-size: 1rem;
+
+  font-size: clamp(0.75rem, 1.6vw, 1rem);
+
   margin-bottom: 0;
+
   width: auto;
+  aspect-ratio: auto;
+
   text-align: left;
 }

@@ -1,45 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Container } from "react-bootstrap";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../../assets/css/Customer/CustMenuDetail.css";
-import { FaArrowLeft, FaShoppingCart, FaPlus, FaMinus, FaArrowRight } from "react-icons/fa";
-
-// Import images (you'll need to replace these with actual image paths)
-import breakfastImg from "/images/breakfast.png";
-import toastImg from "/images/breakfast.png";
-import avocadoImg from "/images/breakfast.png";
-import sandwichImg from "/images/breakfast.png";
+import {
+  FaArrowLeft,
+  FaShoppingCart,
+  FaPlus,
+  FaMinus,
+  FaArrowRight,
+  FaCheck
+} from "react-icons/fa";
+import { FiShoppingBag, FiMinus } from "react-icons/fi";
+import { IoIosAdd } from "react-icons/io";
 
 const CustListMenuListDetail = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get passed item state or fallback to default Scrambled Eggs
+  const itemData = location.state?.item || {};
+
   const [selectedFriedState, setSelectedFriedState] = useState("Deep Fry");
   const [quantity, setQuantity] = useState(1);
   const [selectedAddons, setSelectedAddons] = useState([]);
-  const [showBottomNav, setShowBottomNav] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
+  const [activeCarouselDot, setActiveCarouselDot] = useState(0);
+  const [activeAddonDot, setActiveAddonDot] = useState(0);
 
+  // Customizations state (matching the 3 options in the uploaded image)
+  const [customizations, setCustomizations] = useState([
+    { id: 1, text: "Extra fries on top", checked: true },
+    { id: 2, text: "Extra fries on top", checked: false },
+    { id: 3, text: "Extra fries on top", checked: true }
+  ]);
+
+  // Addons list with generated high-resolution assets
   const addons = [
     {
       id: 1,
       name: "Toasts",
       price: "Pkr 400",
-      image: toastImg
+      numericPrice: 400,
+      image: "/images/toast_addon.jpg"
     },
     {
       id: 2,
       name: "Avocado",
       price: "Pkr 400",
-      image: avocadoImg
+      numericPrice: 400,
+      image: "/images/avocado_addon.jpg"
     },
     {
       id: 3,
       name: "Sandwich",
       price: "Pkr 400",
-      image: sandwichImg
+      numericPrice: 400,
+      image: "/images/sandwich_addon.jpg"
     }
   ];
 
+  const handleCustomizationToggle = (id) => {
+    setCustomizations(prev =>
+      prev.map(c => c.id === id ? { ...c, checked: !c.checked } : c)
+    );
+  };
+
   const handleAddonToggle = (addonId) => {
-    setSelectedAddons(prev => 
-      prev.includes(addonId) 
+    setSelectedAddons(prev =>
+      prev.includes(addonId)
         ? prev.filter(id => id !== addonId)
         : [...prev, addonId]
     );
@@ -49,187 +76,228 @@ const CustListMenuListDetail = () => {
     setQuantity(prev => Math.max(1, prev + change));
   };
 
-  const basePrice = 3899;
-  const addonPrice = selectedAddons.length * 400;
-  const totalPrice = basePrice + addonPrice;
+  // Pricing calculations
+  const originalPrice = 3999;
+  const baseDiscountPrice = 2899;
+  const addonsTotal = selectedAddons.length * 400;
+  const totalPrice = (baseDiscountPrice + addonsTotal) * quantity;
+  const totalItemCount = quantity + selectedAddons.length;
 
-  const handleAddToCart = () => {
-    setIsExiting(false);
-    setShowBottomNav(true);
-    // Start exit animation after 2.7 seconds, then hide after 3 seconds
-    setTimeout(() => {
-      setIsExiting(true);
-    }, 2700);
-    setTimeout(() => {
-      setShowBottomNav(false);
-      setIsExiting(false);
-    }, 3000);
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      setShowBottomNav(false);
-    };
-  }, []);
+  const mainImage = itemData.image || "/images/scrambled_eggs.jpg";
+  const title = itemData.name || "Scrambled Eggs";
 
   return (
     <div className="product-detail-page">
-      <Container fluid className="product-detail-container">
+      {/* Centered mobile card frame for desktop & seamless mobile view */}
+      <div className="product-detail-card-container">
+
         {/* Header Section */}
         <div className="product-header">
-          <button className="back-btn">
+          <button className="back-btn" onClick={() => navigate(-1)} aria-label="Go Back">
             <FaArrowLeft />
             <span>Back</span>
           </button>
-          <h1 className="product-title">Scrambled Eggs</h1>
-          <p className="product-subtitle">Served In <strong>25 Mins </strong> </p>
-        </div>
-
-        {/* Main Product Image */}
-        <div className="product-image-section">
-          <div className="product-image-wrapper">
-            <img 
-              src={breakfastImg} 
-              alt="Scrambled Eggs" 
-              className="product-main-image" 
+          <div className="cart-wrapper">
+            <img
+              src="/images/grocery-store.png"
+              alt="Shopping Cart"
+              className="cart-image"
+              onClick={() => navigate("/customer/menu-orders")}
             />
+
+            <div className="cart-count">
+              2
+            </div>
           </div>
-          {/* Image Carousel Dots */}
+        </div>
+
+        {/* Title & Prep Time */}
+        <div className="product-title-section">
+          <h1 className="product-title">{title}</h1>
+          <p className="product-subtitle">
+            Served In <strong>25 Mins</strong>
+          </p>
+        </div>
+
+        {/* Hero Image Slider with Next-Image Peek */}
+        <div className="product-carousel-section">
+          <div className="product-carousel-track">
+            <div className="carousel-slide main-slide">
+              <img
+                src={mainImage}
+                alt={title}
+                className="product-main-image"
+              />
+            </div>
+            <div className="carousel-slide peek-slide">
+              <img
+                src={mainImage}
+                alt={`${title} Preview`}
+                className="product-main-image"
+              />
+            </div>
+          </div>
+
+          {/* Image Carousel Dots (5 dots) */}
           <div className="image-carousel-dots">
-            <span className="dot active"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
+            {[0, 1, 2, 3, 4].map((dotIdx) => (
+              <span
+                key={dotIdx}
+                className={`dot ${activeCarouselDot === dotIdx ? "active" : ""}`}
+                onClick={() => setActiveCarouselDot(dotIdx)}
+              ></span>
+            ))}
           </div>
         </div>
 
-        {/* Product Options Section */}
-        <div className="product-options">
-          {/* Fried State */}
-          <div className="option-group">
-            <h3 className="option-heading">Fried State</h3>
-            <div className="option-buttons">
-              <button
-                className={`option-btn ${selectedFriedState === "Deep Fry" ? "active" : ""}`}
-                onClick={() => setSelectedFriedState("Deep Fry")}
-              >
-                Deep Fry
-              </button>
-              <button
-                className={`option-btn ${selectedFriedState === "Extra Fry" ? "active" : ""}`}
-                onClick={() => setSelectedFriedState("Extra Fry")}
-              >
-                Extra Fry
-              </button>
-            </div>
-          </div>
-
-          {/* Quantity */}
-          <div className="option-group">
-            <h3 className="option-heading">Quantity</h3>
-            <div className="quantity-selector">
-              <button 
-                className="quantity-btn minus"
-                onClick={() => handleQuantityChange(-1)}
-              >
-                <FaMinus />
-              </button>
-              <span className="quantity-value">{String(quantity).padStart(2, '0')}</span>
-              <button 
-                className="quantity-btn plus"
-                onClick={() => handleQuantityChange(1)}
-              >
-                <FaPlus />
-              </button>
-            </div>
+        {/* Price Row: Strikethrough Original & Discounted Pill */}
+        <div className="price-display-row">
+          <span className="original-price">RS. {originalPrice.toLocaleString()}</span>
+          <div className="discount-price-pill">
+            RS. {baseDiscountPrice.toLocaleString()}
           </div>
         </div>
 
-        {/* Add to Basket Button */}
-        <div className="add-to-basket-section">
-          <button className="add-to-basket-btn" onClick={handleAddToCart}>
-            Add to Basket <FaShoppingCart />
-          </button>
+        {/* Variations Section */}
+        <div className="section-block variations-section">
+          <h3 className="section-heading">Variations</h3>
+          <div className="variation-buttons-group">
+            <button
+              className={`variation-btn ${selectedFriedState === "Deep Fry" ? "active" : ""}`}
+              onClick={() => setSelectedFriedState("Deep Fry")}
+            >
+              Deep Fry
+            </button>
+            <button
+              className={`variation-btn ${selectedFriedState === "Extra Fry" ? "active" : ""}`}
+              onClick={() => setSelectedFriedState("Extra Fry")}
+            >
+              Extra Fry
+            </button>
+          </div>
+        </div>
+
+        {/* Customizations Section (Purple container box with checked pills) */}
+        <div className="section-block customizations-section">
+          <h3 className="section-heading">Customizations</h3>
+          <div className="customizations-purple-card">
+            {customizations.map((item) => (
+              <div
+                key={item.id}
+                className="customization-item-row"
+                onClick={() => handleCustomizationToggle(item.id)}
+              >
+                <span className="customization-item-text">{item.text}</span>
+                <div className={`custom-checkbox ${item.checked ? "checked" : ""}`}>
+                  {item.checked && <FaCheck className="check-mark" />}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quantity Section */}
+        <div className="section-block quantity-section">
+          <h3 className="section-heading">Quantity</h3>
+          {/* Bottom Pre-Cart Action Container (Price + Add button) */}
+          <div className="bottom-action-bar">
+              <div className="quantity-control-wrapper">
+            <button 
+              className="quantity-btns minuss"
+              onClick={() => handleQuantityChange(-1)}
+              aria-label="Decrease quantity"
+            >
+              <FiMinus  />
+            </button>
+            <span className="quantity-value-display">
+              {String(quantity).padStart(2, '0')}
+            </span>
+            <button 
+              className="quantity-btns pluss"
+              onClick={() => handleQuantityChange(1)}
+              aria-label="Increase quantity"
+            >
+              <IoIosAdd />
+            </button>
+          </div>
+            <button className="bottom-add-main-btn">
+              Add
+            </button>
+          </div>
+
         </div>
 
         {/* Addons Section */}
-        <div className="addons-section">
+        <div className="section-block addons-section">
           <div className="addons-header">
-            <h3 className="addons-title">Addons with Scrambled Eggs</h3>
-            <FaArrowRight className="addons-arrow" />
+            <h3 className="section-heading">Addons with {title}</h3>
+            <FaArrowRight className="addons-arrow-icon" />
           </div>
-          
+
           <div className="addons-scroll-container">
-            <div className="addons-list">
+            <div className="addons-flex-list">
               {addons.map((addon) => (
                 <div key={addon.id} className="addon-card">
-                  <img 
-                    src={addon.image} 
-                    alt={addon.name} 
-                    className="addon-image" 
+                  <div className="addon-price-badge">{addon.price}</div>
+                  <img
+                    src={addon.image}
+                    alt={addon.name}
+                    className="addon-card-image"
                   />
-                  <div className="addon-price">{addon.price}</div>
-                  <div className="addon-bottom-row">
-                  <div className="addon-name">{addon.name}</div>
-                  <button
-                    className={`addon-add-btn ${selectedAddons.includes(addon.id) ? "added" : ""}`}
-                    onClick={() => handleAddonToggle(addon.id)}
-                  >
-                    {selectedAddons.includes(addon.id) ? <FaMinus /> : <FaPlus />}
-                  </button>
-                    </div>
-                  
+                  <div className="addon-bottom-overlay">
+                    <span className="addon-title-text">{addon.name}</span>
+                    <button
+                      className={`addon-plus-btn ${selectedAddons.includes(addon.id) ? "added" : ""}`}
+                      onClick={() => handleAddonToggle(addon.id)}
+                      aria-label={`Toggle addon ${addon.name}`}
+                    >
+                      {selectedAddons.includes(addon.id) ? <FaMinus /> : <FaPlus />}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Addons Carousel Dots */}
+          {/* Addons Carousel Dots (5 dots) */}
           <div className="addons-carousel-dots">
-            <span className="dot active"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
+            {[0, 1, 2, 3, 4].map((dotIdx) => (
+              <span
+                key={dotIdx}
+                className={`dot ${activeAddonDot === dotIdx ? "active" : ""}`}
+                onClick={() => setActiveAddonDot(dotIdx)}
+              ></span>
+            ))}
           </div>
         </div>
 
-          {/* Bottom Action Container - Price and Add Button (Sticky) */}
-          <div className="bottom-action-container">
-            <div className="bottom-price">PKR {totalPrice.toLocaleString()}</div>
-            <button className="bottom-add-btn" onClick={handleAddToCart}>
-              Add
-            </button>
-          </div>
 
-          {/* Pop-up Panel - Shows for 3 seconds after Add is clicked */}
-          {showBottomNav && (
-            <div className="order-bar">
-            <div className="order-bar-content">
-              <FaShoppingCart className="order-cart-icon" />
-              <div className="order-info">
-                <span className="order-label">Order</span>
-                <span className="order-items">{selectedAddons.length + quantity} Items</span>
-              </div>
-              <div className="order-image-wrapper">
-                <img 
-                  src={breakfastImg} 
-                  alt="Order" 
-                  className="order-image" 
-                />
-              </div>
+
+        {/* Floating Cart Banner ("Page with cart enabled") */}
+        <div className="order-cart-floating-bar">
+          <div className="cart-info-left">
+            <div className="cart-icon-circle">
+              <FaShoppingCart className="cart-icon" />
+            </div>
+            <div className="cart-text-content">
+              <span className="order-title">Order</span>
+              <span className="items-count">{totalItemCount} Items</span>
             </div>
           </div>
-          )}
+          <div className="cart-thumb-wrapper">
+            <img
+              src={mainImage}
+              alt="Cart item"
+              className="cart-thumb-image"
+            />
+          </div>
+        </div>
 
-          {/* Permanent Order Bar - Always visible at bottom */}
-          
-      </Container>
+      </div>
     </div>
   );
 };
 
 export default CustListMenuListDetail;
+
 

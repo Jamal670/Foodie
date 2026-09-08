@@ -20,5 +20,7 @@ import { ResturantModule } from 'src/resturants/resturant/resturant.module';
     ResturantModule,
   ],
   providers: [CustomerResolver, CustomerService],
+  exports: [CustomerService],
 })
 export class CustomerModule {}
+

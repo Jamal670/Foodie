@@ -88,7 +88,7 @@
   border: none;
   background: transparent;
   color: #49454F;
-  font-size: clamp(0.7rem,0.8rem,1rem);
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.25s ease, font-weight 0.25s ease;
@@ -105,11 +105,50 @@
   background: #241C28;
   color: #ffffff;
   font-weight: 700;
-  font-size: clamp(0.9rem,1rem);
+  font-size: 1.1rem;
   z-index: 6;
 }
 
+/* Inverted Concave Curves (Wave/Notch Fillets) for Active Tab */
+.order-tab-btn.active::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -20px;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border-bottom-right-radius: 20px;
+  box-shadow: 10px 10px 0 0 #241C28;
+  pointer-events: none;
+}
 
+.order-tab-btn.active::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  right: -20px;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border-bottom-left-radius: 20px;
+  box-shadow: -10px 10px 0 0 #241C28;
+  pointer-events: none;
+}
+
+/* Hide outer edge inverted curves */
+.order-tab-btn.active:first-child::before {
+  display: none;
+}
+
+.order-tab-btn.active:last-child::after {
+  display: none;
+}
+
+.order-tab-btn:hover:not(.active) {
+  color: #000000;
+  background-color: rgba(0, 0, 0, 0.03);
+}
 
 /* Dark Body Section */
 .order-dark-body {
@@ -384,7 +423,7 @@
   background: #ffffff;
   border: none;
   border-radius: 50px;
-  padding:      0.2rem 0.2rem 0.2rem 1rem;
+  padding: 0.35rem 0.35rem 0.35rem 1.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -412,9 +451,9 @@
 .black-cart-circle {
   background: #000000;
   color: #ffffff;
-  width: 110px;
+  width: 50px;
   height: 50px;
-  border-radius: 25px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
