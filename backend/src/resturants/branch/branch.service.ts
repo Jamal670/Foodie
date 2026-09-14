@@ -94,4 +94,8 @@ export class BranchService {
       );
     }
   }
+
+  async findBranchById(id: number): Promise<Branch | null> {
+    return this.branchRepository.findOne({ where: { id } });
+  }
 }

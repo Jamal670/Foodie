@@ -8,6 +8,7 @@ export const MENU_ITEMS_QUERIES = {
         description
         basePrice
         discountedPrice
+        status
         categoryId
         category {
           id
@@ -49,6 +50,7 @@ export const MENU_ITEMS_QUERIES = {
         description
         basePrice
         discountedPrice
+        status
         categoryId
         category {
           id
@@ -87,6 +89,7 @@ export const MENU_ITEMS_QUERIES = {
       createMenuItem(dto: $dto) {
         id
         name
+        status
       }
     }
   `,
@@ -96,6 +99,7 @@ export const MENU_ITEMS_QUERIES = {
       updateMenuItem(dto: $dto) {
         id
         name
+        status
       }
     }
   `,

@@ -9,6 +9,7 @@ import { TableSectionModule } from 'src/table-module/table-section/table-section
 import { MenuCategoryModule } from 'src/menu/menu-category/menu-category.module';
 import { MenuItemsModule } from 'src/menu/menu-items/menu-items/menu-items.module';
 import { ResturantModule } from 'src/resturants/resturant/resturant.module';
+import { BranchModule } from 'src/resturants/branch/branch.module';
 
 @Module({
   imports: [
@@ -18,9 +19,10 @@ import { ResturantModule } from 'src/resturants/resturant/resturant.module';
     MenuCategoryModule,
     MenuItemsModule,
     ResturantModule,
+    BranchModule,
   ],
   providers: [CustomerResolver, CustomerService],
   exports: [CustomerService],
 })
-export class CustomerModule {}
+export class CustomerModule { }
 

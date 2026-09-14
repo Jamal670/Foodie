@@ -19,6 +19,7 @@ import {
 } from "../../services/menu-cerate&update/categories/create-category.service";
 import {
   getMenuItems,
+  updateMenuItem,
   deleteMenuItem,
   deleteMenuItems,
 } from "../../services/menu-cerate&update/menu-items.service";
@@ -42,7 +43,6 @@ function SubAdminEditMenu() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showBulkMenu, setShowBulkMenu] = useState(false);
-  const [status, setStatus] = useState("Active");
   const [pendingItemDelete, setPendingItemDelete] = useState(null);
 
   // Client-side search filtering
@@ -129,6 +129,29 @@ function SubAdminEditMenu() {
 
   const handleEditItem = (item) => {
     navigate(`/subadmin/add-item?id=${item.id}`);
+  };
+
+  const handleStatusChange = async (itemId, newStatus) => {
+    try {
+      const updated = await updateMenuItem({
+        itemId: parseInt(itemId, 10),
+        status: newStatus,
+      });
+      if (updated) {
+        setItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === itemId ? { ...item, status: newStatus } : item,
+          ),
+        );
+        useAlertStore
+          .getState()
+          .showAlert(`Item status updated to ${newStatus}.`);
+      }
+    } catch (err) {
+      useAlertStore
+        .getState()
+        .showAlert(err.message || "Failed to update item status.");
+    }
   };
 
   const handleDeleteItem = (itemId) => {
@@ -606,13 +629,17 @@ function SubAdminEditMenu() {
                           >
                             <select
                               className={`status-dropdown ${
-                                status === "Active" ? "active" : "disabled"
+                                (item.status || "Active") === "Active"
+                                  ? "active"
+                                  : "disabled"
                               }`}
-                              value={status}
-                              onChange={(e) => setStatus(e.target.value)}
+                              value={item.status || "Active"}
+                              onChange={(e) =>
+                                handleStatusChange(item.id, e.target.value)
+                              }
                             >
                               <option value="Active">Active</option>
-                              <option value="Disable">Disable</option>
+                              <option value="Inactive">Inactive</option>
                             </select>
                             <FaChevronDown className="active-status-icon" />
                           </td>

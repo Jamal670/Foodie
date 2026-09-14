@@ -73,8 +73,8 @@ export class MenuCategoryService {
     categories.forEach((category) => {
       const current = categoryMap.get(category.id);
 
-      // Root Category
-      if (!category.parentCategoryId) {
+      // Root Category (level 1 or no parent)
+      if (!category.parentCategoryId || category.level === 1) {
         tree.push(current);
         return;
       }
@@ -84,6 +84,8 @@ export class MenuCategoryService {
 
       if (parent) {
         parent.children.push(current);
+      } else {
+        tree.push(current);
       }
     });
 

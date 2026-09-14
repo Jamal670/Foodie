@@ -2,11 +2,13 @@ import { Field, Float, InputType, Int } from '@nestjs/graphql';
 import {
   IsArray,
   IsBoolean,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -99,15 +101,22 @@ export class CreateMenuItemDto {
   @IsString()
   description?: string;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @ValidateIf((dto: CreateMenuItemDto) => !dto.variations || dto.variations.length === 0)
   @IsNumber()
-  @Min(0, { message: 'Base price is required.' })
-  basePrice: number;
+  basePrice?: number;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
+  @ValidateIf((dto: CreateMenuItemDto) => !dto.variations || dto.variations.length === 0)
+  @IsNotEmpty({ message: 'discountedPrice is required when no variations are provided.' })
   @IsNumber()
-  @Min(0, { message: 'Discounted price is required.' })
-  discountedPrice: number;
+  discountedPrice?: number;
+
+  @Field({ nullable: true, defaultValue: 'Active' })
+  @IsOptional()
+  @IsIn(['Active', 'Inactive'], { message: 'Status must be Active or Inactive.' })
+  status?: string;
 
   // ================= IMAGES =================
 

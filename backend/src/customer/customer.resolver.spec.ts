@@ -11,12 +11,14 @@ import { Customer } from './entity/customer.entity';
 import { MenuCategoryService } from 'src/menu/menu-category/menu-category.service';
 import { MenuItemsService } from 'src/menu/menu-items/menu-items/menu-items.service';
 import { ResturantService } from 'src/resturants/resturant/resturant.service';
+import { BranchService } from 'src/resturants/branch/branch.service';
 import {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { TableStatus, QrType } from 'src/table-module/table/entity/enums/enums';
+import { CustomerJwtAuthGuard } from 'src/auth/guards/customer-jwt-auth.guard';
 import * as bcrypt from 'bcrypt';
 
 describe('Customer Architecture & Auth Refactor', () => {
@@ -29,6 +31,7 @@ describe('Customer Architecture & Auth Refactor', () => {
   let menuCategoryService: MenuCategoryService;
   let menuItemsService: MenuItemsService;
   let resturantService: ResturantService;
+  let branchService: BranchService;
 
   const mockCustomerRecord = {
     id: 101,
@@ -108,19 +111,26 @@ describe('Customer Architecture & Auth Refactor', () => {
         {
           provide: MenuCategoryService,
           useValue: {
-            getCategories: jest.fn(),
+            getMenuCategoriesTree: jest.fn(),
           },
         },
         {
           provide: MenuItemsService,
           useValue: {
             getMenuItems: jest.fn(),
+            getMenuItem: jest.fn(),
           },
         },
         {
           provide: ResturantService,
           useValue: {
             findResturantById: jest.fn(),
+          },
+        },
+        {
+          provide: BranchService,
+          useValue: {
+            findBranchById: jest.fn(),
           },
         },
         {
@@ -152,6 +162,7 @@ describe('Customer Architecture & Auth Refactor', () => {
     menuCategoryService = module.get<MenuCategoryService>(MenuCategoryService);
     menuItemsService = module.get<MenuItemsService>(MenuItemsService);
     resturantService = module.get<ResturantService>(ResturantService);
+    branchService = module.get<BranchService>(BranchService);
   });
 
   afterEach(() => {
@@ -296,9 +307,10 @@ describe('Customer Architecture & Auth Refactor', () => {
         session: mockSession as any,
         isNew: true,
       });
-      jest.spyOn(menuCategoryService, 'getCategories').mockResolvedValue([]);
+      jest.spyOn(menuCategoryService, 'getMenuCategoriesTree').mockResolvedValue([]);
       jest.spyOn(menuItemsService, 'getMenuItems').mockResolvedValue([]);
       jest.spyOn(resturantService, 'findResturantById').mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(branchService, 'findBranchById').mockResolvedValue({ id: 3 } as any);
 
       const validateSpy = jest.spyOn(service, 'validateCustomerToken');
 
@@ -318,6 +330,163 @@ describe('Customer Architecture & Auth Refactor', () => {
         expect(response.session.id).toBe(7);
       }
     });
+
+    it('7. scanQrCode returns strictly hierarchical categories (Level 1 root) and menuItems with images', async () => {
+      const mockTable = { id: 5, restaurantId: 1, branchId: 3, status: TableStatus.AVAILABLE };
+      const mockSession = { id: 7, tableId: 5, restaurantId: 1, branchId: 3, isActive: true };
+
+      const mockTree = [
+        {
+          id: 10,
+          name: 'Main Dishes',
+          level: 1,
+          parentCategoryId: null,
+          children: [
+            {
+              id: 36,
+              name: 'Soups',
+              level: 2,
+              parentCategoryId: 10,
+              children: [
+                {
+                  id: 37,
+                  name: 'Spicy Soups',
+                  level: 3,
+                  parentCategoryId: 36,
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+
+      const mockMenuItems = [
+        { id: 1, name: 'Tomato Soup', images: [{ id: 1, imageUrl: 'http://img.jpg' }] },
+      ];
+
+      jest.spyOn(tableService, 'validateQrToken').mockResolvedValue(mockTable as any);
+      jest.spyOn(tableSectionService, 'findOrCreateSession').mockResolvedValue({
+        session: mockSession as any,
+        isNew: true,
+      });
+      jest.spyOn(menuCategoryService, 'getMenuCategoriesTree').mockResolvedValue(mockTree as any);
+      jest.spyOn(menuItemsService, 'getMenuItems').mockResolvedValue(mockMenuItems as any);
+      jest.spyOn(resturantService, 'findResturantById').mockResolvedValue({ id: 1 } as any);
+      jest.spyOn(branchService, 'findBranchById').mockResolvedValue({ id: 3 } as any);
+
+      const response = await service.scanQrCode({ qrToken: 'valid_qr_123' }, 'User-Agent-Mock');
+
+      // Top level categories array must contain only root categories (id 10)
+      expect(response.categories).toHaveLength(1);
+      expect(response.categories[0].id).toBe(10);
+      expect((response.categories[0] as any).children[0].id).toBe(36);
+      expect((response.categories[0] as any).children[0].children[0].id).toBe(37);
+
+      // IDs 36 and 37 MUST NOT be top-level categories
+      expect(response.categories.find((c) => c.id === 36)).toBeUndefined();
+      expect(response.categories.find((c) => c.id === 37)).toBeUndefined();
+
+      // table and branch should exist on response
+      expect(response.table.id).toBe(5);
+      expect(response.branch.id).toBe(3);
+
+      // menuItems with images should exist on response
+      expect(response.menuItems).toEqual(mockMenuItems);
+    });
+
+    describe('getProductDetails & CustomerJwtAuthGuard', () => {
+      it('should delegate getProductDetails mutation in CustomerResolver to CustomerService with session.restaurantId', async () => {
+        const dto = { menuItemId: 50 };
+        const mockSession = { id: 7, restaurantId: 1 } as any;
+        const expectedResponse = {
+          images: [{ id: 1, imageUrl: 'img.jpg' }],
+          variations: [],
+          customizations: [],
+          addons: [],
+        } as any;
+        jest.spyOn(service, 'getProductDetailById').mockResolvedValue(expectedResponse);
+
+        const result = await resolver.getProductDetailById(dto, mockSession);
+
+        expect(service.getProductDetailById).toHaveBeenCalledWith(dto, 1);
+        expect(result).toBe(expectedResponse);
+      });
+
+      it('should validate customer token and attach context in CustomerJwtAuthGuard', async () => {
+        const guard = new CustomerJwtAuthGuard(service);
+        const mockReq = {
+          headers: { authorization: 'Bearer valid_token' },
+        };
+        const mockContext = {
+          getType: () => 'graphql',
+          getHandler: jest.fn(),
+          getClass: jest.fn(),
+          getArgs: jest.fn().mockReturnValue([{}, {}, { req: mockReq }, {}]),
+        } as any;
+
+        jest.spyOn(service, 'validateCustomerToken').mockResolvedValue({
+          customer: mockCustomerRecord as any,
+          session: { id: 7, restaurantId: 1 } as any,
+          table: { id: 5 } as any,
+        });
+
+        const canActivate = await guard.canActivate(mockContext);
+
+        expect(canActivate).toBe(true);
+        expect(service.validateCustomerToken).toHaveBeenCalledWith('valid_token');
+        expect((mockReq as any).currentCustomer).toEqual(mockCustomerRecord);
+        expect((mockReq as any).currentSession).toEqual({ id: 7, restaurantId: 1 });
+      });
+
+      it('should throw UnauthorizedException with rescan QR message in CustomerJwtAuthGuard on missing or invalid token', async () => {
+        const guard = new CustomerJwtAuthGuard(service);
+        const mockReq = { headers: {} };
+        const mockContext = {
+          getType: () => 'graphql',
+          getHandler: jest.fn(),
+          getClass: jest.fn(),
+          getArgs: jest.fn().mockReturnValue([{}, {}, { req: mockReq }, {}]),
+        } as any;
+
+        await expect(guard.canActivate(mockContext)).rejects.toThrow(
+          UnauthorizedException,
+        );
+      });
+
+      it('should return exactly images, variations, customizations, addons for a valid item in CustomerService', async () => {
+        const mockItem = {
+          id: 50,
+          restaurantId: 1,
+          images: Promise.resolve([{ id: 1, imageUrl: 'img.jpg' }]),
+          variations: Promise.resolve([{ id: 2, name: 'Large', price: 10 }]),
+          customizations: Promise.resolve([]),
+          addons: Promise.resolve([]),
+        };
+
+        jest.spyOn(menuItemsService, 'getMenuItem').mockResolvedValue(mockItem as any);
+
+        const res = await service.getProductDetailById({ menuItemId: 50 }, 1);
+
+        expect(res).toEqual({
+          images: [{ id: 1, imageUrl: 'img.jpg' }],
+          variations: [{ id: 2, name: 'Large', price: 10 }],
+          customizations: [],
+          addons: [],
+        });
+      });
+
+      it('should throw NotFoundException if getMenuItem fails or item belongs to a different restaurant', async () => {
+        jest.spyOn(menuItemsService, 'getMenuItem').mockImplementation(() => {
+          throw new NotFoundException('Menu item not found.');
+        });
+
+        await expect(
+          service.getProductDetailById({ menuItemId: 50 }, 1),
+        ).rejects.toThrow(NotFoundException);
+      });
+    });
   });
 });
+
 

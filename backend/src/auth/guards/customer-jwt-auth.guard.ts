@@ -32,17 +32,28 @@ export class CustomerJwtAuthGuard implements CanActivate {
       accessToken.trim() === 'undefined' ||
       accessToken.trim() === 'null'
     ) {
-      throw new UnauthorizedException('Customer access token missing.');
+      throw new UnauthorizedException(
+        'Dining session has expired. Please rescan the QR code to continue.',
+      );
     }
 
-    const validatedContext =
-      await this.customerService.validateCustomerToken(accessToken);
+    try {
+      const validatedContext =
+        await this.customerService.validateCustomerToken(accessToken);
 
-    // Attach validated customer context to request object
-    req.currentCustomer = validatedContext.customer;
-    req.currentSession = validatedContext.session;
-    req.currentTable = validatedContext.table;
+      // Attach validated customer context to request object
+      req.currentCustomer = validatedContext.customer;
+      req.currentSession = validatedContext.session;
+      req.currentTable = validatedContext.table;
 
-    return true;
+      return true;
+    } catch (err) {
+      if (err instanceof UnauthorizedException) {
+        throw new UnauthorizedException(
+          'Dining session has expired. Please rescan the QR code to continue.',
+        );
+      }
+      throw err;
+    }
   }
 }

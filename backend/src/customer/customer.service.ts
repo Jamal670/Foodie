@@ -14,15 +14,21 @@ import { Customer } from './entity/customer.entity';
 import { MenuCategoryService } from 'src/menu/menu-category/menu-category.service';
 import { MenuItemsService } from 'src/menu/menu-items/menu-items/menu-items.service';
 import { ResturantService } from 'src/resturants/resturant/resturant.service';
+import { BranchService } from 'src/resturants/branch/branch.service';
 
 import { TableService } from 'src/table-module/table/table.service';
 import { TableSectionService } from 'src/table-module/table-section/table-section.service';
 import { ScanQrInput } from './dto/scan-qr.dto';
-import { CustomerScanResponse } from './dto/customer-scan-response.dto';
+import { CustomerScanResponse } from './dto/response/customer-scan-response.dto';
+import {
+  ProductDetailsDto,
+  ProductDetailsResponse,
+} from './dto/product-details.dto';
 import { TableSession } from 'src/table-module/table-section/entity/tableSession.entity';
 import { TableStatus } from 'src/table-module/table/entity/enums/enums';
 import { Table } from 'src/table-module/table/entity/table.entity';
 import { Restaurant } from 'src/resturants/resturant/entity/resturant.entity';
+import { Branch } from 'src/resturants/branch/entity/branch.entity';
 import { MenuCategory } from 'src/menu/menu-category/Entity/createMenuCategory.entity';
 import { MenuItem } from 'src/menu/menu-items/menu-items/entity/createMenuItems.entity';
 
@@ -42,10 +48,11 @@ export class CustomerService {
     private readonly menuCategoryService: MenuCategoryService,
     private readonly menuItemsService: MenuItemsService,
     private readonly resturantService: ResturantService,
+    private readonly branchService: BranchService,
     private readonly tableService: TableService,
     private readonly tableSectionService: TableSectionService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   // ==================== scanQrCode (public orchestrator) ====================
   async scanQrCode(
@@ -56,10 +63,10 @@ export class CustomerService {
   ): Promise<CustomerScanResponse> {
     const cleanToken =
       accessToken &&
-      typeof accessToken === 'string' &&
-      accessToken.trim() !== '' &&
-      accessToken.trim() !== 'undefined' &&
-      accessToken.trim() !== 'null'
+        typeof accessToken === 'string' &&
+        accessToken.trim() !== '' &&
+        accessToken.trim() !== 'undefined' &&
+        accessToken.trim() !== 'null'
         ? accessToken.trim()
         : undefined;
 
@@ -73,10 +80,12 @@ export class CustomerService {
         throw new BadRequestException('Table QR code does not match session.');
       }
 
-      const menuData = await this.loadRestaurantMenu(table.restaurantId);
+      const menuData = await this.loadRestaurantMenu(table.restaurantId, table.branchId);
       return this.buildResponse(
         cleanToken,
         verifiedContext.session,
+        table,
+        menuData.branch,
         menuData.restaurant,
         menuData.categories,
         menuData.menuItems,
@@ -91,11 +100,13 @@ export class CustomerService {
       accessToken: finalAccessToken,
     } = await this.executeNewScanFlow(input.qrToken, userAgent, effectiveDeviceId);
 
-    const menuData = await this.loadRestaurantMenu(table.restaurantId);
+    const menuData = await this.loadRestaurantMenu(table.restaurantId, table.branchId);
 
     return this.buildResponse(
       finalAccessToken,
       session,
+      table,
+      menuData.branch,
       menuData.restaurant,
       menuData.categories,
       menuData.menuItems,
@@ -152,7 +163,7 @@ export class CustomerService {
 
     const isExpired = session.expiresAt && new Date() > session.expiresAt;
     if (isExpired) {
-      throw new UnauthorizedException('Dining session has expired.');
+      throw new UnauthorizedException('Dining session has expired. Please rescan the QR code to continue.');
     }
 
     if (
@@ -307,19 +318,25 @@ export class CustomerService {
   }
 
   // ==================== loadRestaurantMenu ====================
-  private async loadRestaurantMenu(restaurantId: number) {
-    const [categories, menuItems, restaurant] = await Promise.all([
-      this.menuCategoryService.getCategories(restaurantId),
-      this.menuItemsService.getMenuItems(restaurantId),
+  private async loadRestaurantMenu(restaurantId: number, branchId: number) {
+    const [categories, restaurant, branch, menuItems] = await Promise.all([
+      this.menuCategoryService.getMenuCategoriesTree(restaurantId),
       this.resturantService.findResturantById(restaurantId),
+      this.branchService.findBranchById(branchId),
+      this.menuItemsService.getMenuItems(restaurantId),
     ]);
 
     if (!restaurant) {
       throw new NotFoundException('Restaurant not found.');
     }
 
+    if (!branch) {
+      throw new NotFoundException('Branch not found.');
+    }
+
     return {
       restaurant,
+      branch,
       categories,
       menuItems,
     };
@@ -329,6 +346,8 @@ export class CustomerService {
   private buildResponse(
     accessToken: string,
     session: TableSession,
+    table: Table,
+    branch: Branch,
     restaurant: Restaurant,
     categories: MenuCategory[],
     menuItems: MenuItem[],
@@ -336,9 +355,40 @@ export class CustomerService {
     return {
       accessToken,
       session,
+      table,
+      branch,
       restaurant,
       categories,
       menuItems,
+    };
+  }
+
+  // ==================== getProductDetails ====================
+  async getProductDetailById(
+    dto: ProductDetailsDto,
+    restaurantId: number,
+  ): Promise<ProductDetailsResponse> {
+    const menuItem = await this.menuItemsService.getMenuItem(
+      dto.menuItemId,
+      restaurantId,
+    );
+
+    if (!menuItem) {
+      throw new NotFoundException('Menu item not found.');
+    }
+
+    if (menuItem.restaurantId !== restaurantId) {
+      throw new NotFoundException('Menu item not found.');
+    }
+
+    const variations = (await menuItem.variations) || [];
+    const customizations = (await menuItem.customizations) || [];
+    const addons = (await menuItem.addons) || [];
+
+    return {
+      variations,
+      customizations,
+      addons,
     };
   }
 }

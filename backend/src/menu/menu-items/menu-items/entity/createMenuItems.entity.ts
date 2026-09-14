@@ -53,6 +53,10 @@ export class MenuItem {
   })
   discountedPrice?: number;
 
+  @Field({ defaultValue: 'Active' })
+  @Column({ default: 'Active' })
+  status: string;
+
   @Field(() => Restaurant)
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.menuItems, {
     onDelete: 'CASCADE',

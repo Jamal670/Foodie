@@ -1,30 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { IoShare } from "react-icons/io5";
-import {
-  FaPlus,
-  FaTrash,
-  FaTimes,
-  FaAngleDown,
-  FaBars,
-  FaCheck,
-} from "react-icons/fa";
+import {FaTrash, FaTimes, FaAngleDown, FaBars } from "react-icons/fa";
 import { IoMdAdd } from "react-icons/io";
 import SubAdminSideBar from "./SubAdminSideBar";
-import {
-  getLevel1And2Categories,
-  uploadImage,
-} from "../../services/menu-cerate&update/categories/create-category.service";
-import {
-  getMenuItem,
-  getMenuItems,
-  createMenuItem,
-  updateMenuItem,
-  deleteMenuItem,
-} from "../../services/menu-cerate&update/menu-items.service";
+import { getLevel1And2Categories, uploadImage,} from "../../services/menu-cerate&update/categories/create-category.service";
+import {getMenuItem,getMenuItems,createMenuItem,updateMenuItem,deleteMenuItem} from "../../services/menu-cerate&update/menu-items.service";
 import { useAlertStore } from "../../context/alertStore";
 import "../../assets/css/AddItemForm.css";
-import "../../assets/css/SubAdminEditMenu.css"; // for sidebars and toggles
+import "../../assets/css/SubAdminEditMenu.css";
 
 function AddItemForm() {
   const navigate = useNavigate();
@@ -180,6 +164,21 @@ function AddItemForm() {
     };
   }, []);
 
+  // Derived variation state & price reset logic
+  const hasVariations = showVariations && variations.length > 0;
+  const prevHasVariationsRef = useRef(hasVariations);
+
+  useEffect(() => {
+    if (!prevHasVariationsRef.current && hasVariations) {
+      setBasePrice("0");
+      setDiscountedPrice("0");
+    } else if (prevHasVariationsRef.current && !hasVariations) {
+      setBasePrice("");
+      setDiscountedPrice("");
+    }
+    prevHasVariationsRef.current = hasVariations;
+  }, [hasVariations]);
+
   // Images operations
   const handleCoverImageChange = (event) => {
     const file = event.target.files[0];
@@ -266,7 +265,12 @@ function AddItemForm() {
   };
 
   // Toggle blocks
-  const toggleVariations = () => setShowVariations(!showVariations);
+  const toggleVariations = () => {
+    if (showVariations) {
+      setVariations([]);
+    }
+    setShowVariations(!showVariations);
+  };
   const toggleCustomizations = () => setShowCustomizations(!showCustomizations);
   const toggleAddons = () => setShowAddons(!showAddons);
 
@@ -300,13 +304,25 @@ function AddItemForm() {
       return;
     }
 
-    if (
-      !basePrice.trim() ||
-      isNaN(parseFloat(basePrice)) ||
-      parseFloat(basePrice) < 0
-    ) {
-      useAlertStore.getState().showAlert("Please enter a valid base price.");
-      return;
+    if (!hasVariations) {
+      if (
+        !discountedPrice.trim() ||
+        isNaN(parseFloat(discountedPrice)) ||
+        parseFloat(discountedPrice) < 0
+      ) {
+        useAlertStore
+          .getState()
+          .showAlert("discountedPrice is required.");
+        return;
+      }
+
+      if (
+        basePrice.trim() &&
+        (isNaN(parseFloat(basePrice)) || parseFloat(basePrice) < 0)
+      ) {
+        useAlertStore.getState().showAlert("Please enter a valid base price.");
+        return;
+      }
     }
 
     if (category === "None" || !category) {
@@ -338,23 +354,27 @@ function AddItemForm() {
       }
 
       // Extract values
-      const valBasePrice = parseFloat(basePrice);
-      const valDiscountedPrice = discountedPrice.trim()
-        ? parseFloat(discountedPrice)
-        : 0;
+      const valBasePrice = hasVariations
+        ? 0
+        : basePrice.trim()
+        ? parseFloat(basePrice)
+        : undefined;
+      const valDiscountedPrice = hasVariations
+        ? 0
+        : parseFloat(discountedPrice);
       const computedVariations = showVariations
         ? variations
-            .filter((v) => v.name.trim() && !isNaN(parseFloat(v.price)))
-            .map((v) => ({ name: v.name, price: parseFloat(v.price) }))
+          .filter((v) => v.name.trim() && !isNaN(parseFloat(v.price)))
+          .map((v) => ({ name: v.name, price: parseFloat(v.price) }))
         : [];
       const computedCustomizations = showCustomizations
         ? customizations
-            .filter((c) => c.name.trim() && !isNaN(parseFloat(c.price)))
-            .map((c) => ({
-              name: c.name,
-              price: parseFloat(c.price),
-              multiSelect: !!c.multiSelect,
-            }))
+          .filter((c) => c.name.trim() && !isNaN(parseFloat(c.price)))
+          .map((c) => ({
+            name: c.name,
+            price: parseFloat(c.price),
+            multiSelect: !!c.multiSelect,
+          }))
         : [];
       const computedAddons = showAddons
         ? addons.map((a) => ({ addonId: parseInt(a.id, 10) }))
@@ -617,7 +637,7 @@ function AddItemForm() {
                       <span style={{ color: "#da3c3cff" }}>*</span>
                     </h3>
                     <div className="form-group">
-                      <label>Base Price</label>
+                      <label>Base Price (Optional)</label>
                       <div className="price-input">
                         <span className="currency">Rs.</span>
                         <input
@@ -630,12 +650,19 @@ function AddItemForm() {
                             }
                           }}
                           placeholder="3000"
-                          disabled={submitting}
+                          disabled={hasVariations || submitting}
                         />
                       </div>
                     </div>
                     <div className="form-group">
-                      <label>Discounted Price (Optional)</label>
+                      <label>
+                        Discounted Price{" "}
+                        {!hasVariations ? (
+                          <span style={{ color: "#da3c3cff" }}>*</span>
+                        ) : (
+                          "(Optional)"
+                        )}
+                      </label>
                       <div className="price-input">
                         <span className="currency">Rs.</span>
                         <input
@@ -648,10 +675,15 @@ function AddItemForm() {
                             }
                           }}
                           placeholder="2399"
-                          disabled={submitting}
+                          disabled={hasVariations || submitting}
                         />
                       </div>
                     </div>
+                    {hasVariations && (
+                      <p style={{ color: "#666", fontSize: "0.85rem", marginTop: "-5px", marginBottom: "15px" }}>
+                        Pricing is set per variation — item-level price is disabled
+                      </p>
+                    )}
                     <div className="form-group">
                       <label>Category</label>
                       <div

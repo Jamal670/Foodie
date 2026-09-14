@@ -1,12 +1,21 @@
 import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
+import { UseGuards, BadRequestException } from '@nestjs/common';
 
 import { CustomerService } from './customer.service';
 import { ScanQrInput } from './dto/scan-qr.dto';
-import { CustomerScanResponse } from './dto/customer-scan-response.dto';
+import { CustomerScanResponse } from './dto/response/customer-scan-response.dto';
+import {
+  ProductDetailsDto,
+  ProductDetailsResponse,
+} from './dto/product-details.dto';
+
+import { CustomerJwtAuthGuard } from 'src/auth/guards/customer-jwt-auth.guard';
+import { CurrentSession } from 'src/auth/decorators/current-customer.decorator';
+import { TableSession } from 'src/table-module/table-section/entity/tableSession.entity';
 
 @Resolver()
 export class CustomerResolver {
-  constructor(private readonly customerService: CustomerService) {}
+  constructor(private readonly customerService: CustomerService) { }
 
   //======================= Scan customer QR code =======================
   @Mutation(() => CustomerScanResponse)
@@ -60,4 +69,20 @@ export class CustomerResolver {
 
     return response;
   }
+
+  //======================= Get product details =======================
+  @UseGuards(CustomerJwtAuthGuard)
+  @Mutation(() => ProductDetailsResponse)
+  async getProductDetailById(
+    @Args('dto') dto: ProductDetailsDto,
+    @CurrentSession() session: TableSession,
+  ): Promise<ProductDetailsResponse> {
+    if (!session || !session.restaurantId) {
+      throw new BadRequestException(
+        'Dining session has expired. Please rescan the QR code to continue.',
+      );
+    }
+    return this.customerService.getProductDetailById(dto, session.restaurantId);
+  }
 }
+

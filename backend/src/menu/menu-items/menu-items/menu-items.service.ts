@@ -75,14 +75,47 @@ export class MenuItemsService {
         );
       }
 
-      // 4. Create main MenuItem
+      // 4. Determine item prices based on variations
+      const hasVariations =
+        Array.isArray(dto.variations) && dto.variations.length > 0;
+
+      let basePrice = dto.basePrice ?? 0;
+      let discountedPrice = dto.discountedPrice;
+
+      // If variations exist, use the lowest variation price
+      // as the menu item's discountedPrice.
+      if (dto.variations && dto.variations.length > 0) {
+        const variationPrices = dto.variations
+          .map((variation) => Number(variation.price))
+          .filter((price) => Number.isFinite(price));
+
+        if (variationPrices.length === 0) {
+          throw new BadRequestException(
+            'At least one valid variation price is required when variations are provided.',
+          );
+        }
+
+        discountedPrice = Math.min(...variationPrices);
+      }
+
+      if (
+        !hasVariations &&
+        (discountedPrice === undefined || discountedPrice === null)
+      ) {
+        throw new BadRequestException(
+          'discountedPrice is required when no variations are provided.',
+        );
+      }
+
+      // Create main MenuItem
       const menuItem = entityManager.create(MenuItem, {
         restaurantId,
         categoryId: dto.categoryId,
         name: dto.name,
         description: dto.description,
-        basePrice: dto.basePrice,
-        discountedPrice: dto.discountedPrice,
+        basePrice,
+        discountedPrice,
+        status: dto.status || 'Active',
       });
 
       const savedMenuItem = await entityManager.save(MenuItem, menuItem);
@@ -153,6 +186,7 @@ export class MenuItemsService {
     return this.dataSource.getRepository(MenuItem).find({
       where: {
         restaurantId,
+        status: 'Active',
       },
       relations: {
         images: true,
@@ -247,6 +281,12 @@ export class MenuItemsService {
       if (dto.discountedPrice !== undefined)
         updateData.discountedPrice = dto.discountedPrice;
       if (dto.categoryId !== undefined) updateData.categoryId = dto.categoryId;
+      if (dto.status !== undefined) {
+        if (!['Active', 'Inactive'].includes(dto.status)) {
+          throw new BadRequestException('Status must be Active or Inactive.');
+        }
+        updateData.status = dto.status;
+      }
 
       if (Object.keys(updateData).length > 0) {
         await entityManager.update(MenuItem, dto.itemId, updateData);
@@ -275,6 +315,16 @@ export class MenuItemsService {
           dto.itemId,
           dto.variations,
         );
+        if (dto.variations && dto.variations.length > 0) {
+          const variationPrices = dto.variations
+            .map((variation) => Number(variation.price))
+            .filter((price) => Number.isFinite(price));
+          if (variationPrices.length > 0) {
+            await entityManager.update(MenuItem, dto.itemId, {
+              discountedPrice: Math.min(...variationPrices),
+            });
+          }
+        }
       }
 
       if (dto.customizationsChanged === true) {
