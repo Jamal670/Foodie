@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import "../../assets/css/Customer/CustMenuList.css";
 import { IoIosArrowBack } from "react-icons/io";
 import { FaShoppingCart } from "react-icons/fa";
@@ -15,11 +15,14 @@ import {
   getThumbnailUrl,
 } from "../../services/customer/menu/showmenu.service";
 import { useAlertStore } from "../../context/alertStore";
+import { useCartCount, getCartNavigationPath } from "../../utils/cartStorage";
 
 const CustMenuList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { qrToken: routeQrToken, categoryId: routeCategoryId } = useParams();
+  const queryClient = useQueryClient();
+  const cartCount = useCartCount();
 
   const [activeLevel2Id, setActiveLevel2Id] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -139,7 +142,7 @@ const CustMenuList = () => {
       <Container fluid className="menu-list-container">
         <div className="menu-list-header">
           <button className="back-btn" onClick={() => navigate(-1)}>
-            <IoIosArrowBack />
+            <IoIosArrowBack size={15} />
             <span>Back</span>
           </button>
 
@@ -148,10 +151,12 @@ const CustMenuList = () => {
               src="/images/grocery-store.png"
               alt="Shopping Cart"
               className="cart-image"
-              onClick={() => navigate("/customer/menu-orders")}
+              onClick={() =>
+                navigate(getCartNavigationPath(qrToken, queryClient))
+              }
             />
 
-            <div className="cart-count">2</div>
+            <div className="cart-count">{cartCount}</div>
           </div>
         </div>
 
@@ -172,9 +177,8 @@ const CustMenuList = () => {
                 {level2Categories.map((cat) => (
                   <button
                     key={cat.id}
-                    className={`category-tab ${
-                      activeLevel2Id === cat.id ? "active" : ""
-                    }`}
+                    className={`category-tab ${activeLevel2Id === cat.id ? "active" : ""
+                      }`}
                     onClick={() => setActiveLevel2Id(cat.id)}
                   >
                     {cat.name}
@@ -210,7 +214,7 @@ const CustMenuList = () => {
                 {foodItems.map((item) => (
                   <div
                     key={item.id}
-                    className="category-cards"
+                    className="category-cardss"
                     onClick={() => handleAddToCart(item)}
                   >
                     <div>

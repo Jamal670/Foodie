@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Spinner } from "react-bootstrap";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import "../../assets/css/Customer/CustMen.css";
 import { FaArrowRight } from "react-icons/fa";
 import FoodieLogo from "../../components/common/FoodieLogo";
@@ -10,11 +10,14 @@ import {
   getLevel1Categories,
 } from "../../services/customer/menu/showmenu.service";
 import { useAlertStore } from "../../context/alertStore";
+import { useCartCount, getCartNavigationPath } from "../../utils/cartStorage";
 
 const CustMenu = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { qrToken: routeQrToken } = useParams();
+  const queryClient = useQueryClient();
+  const cartCount = useCartCount();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Extract QR token dynamically from path params, search params, state, or session storage
@@ -103,10 +106,12 @@ const CustMenu = () => {
                     src="/images/grocery-store.png"
                     alt="Shopping Cart"
                     className="cart-image"
-                    onClick={() => navigate("/customer/menu-orders")}
+                    onClick={() =>
+                      navigate(getCartNavigationPath(qrToken, queryClient))
+                    }
                   />
 
-                  <div className="cart-count">2</div>
+                  <div className="cart-count">{cartCount}</div>
                 </div>
               </div>
 

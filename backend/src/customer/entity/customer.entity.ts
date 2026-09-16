@@ -6,12 +6,14 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { Field, ObjectType, Int } from '@nestjs/graphql';
 
 import { Table } from 'src/table-module/table/entity/table.entity';
 import { Branch } from 'src/resturants/branch/entity/branch.entity';
 import { TableSession } from 'src/table-module/table-section/entity/tableSession.entity';
+import { Orders } from 'src/customer/orders/order/entity/orders.entity';
 
 @ObjectType()
 @Entity('customers')
@@ -82,6 +84,10 @@ export class Customer {
   })
   @JoinColumn({ name: 'sessionId' })
   session: Promise<TableSession>;
+
+  @Field(() => [Orders], { nullable: true })
+  @OneToMany(() => Orders, (order) => order.customer)
+  orders?: Promise<Orders[]>;
 
   // ================= TIMESTAMPS =================
 

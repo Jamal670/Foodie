@@ -1,19 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import "../../assets/css/Customer/CustOrder.css";
 import OrderPlaced from "../../components/models/customer/orderPlaced";
-import {
-  FaArrowLeft,
-  FaShoppingCart,
-  FaPlus,
-  FaMinus,
-  FaChevronDown,
-} from "react-icons/fa";
+import {FaShoppingCart, FaPlus, FaMinus} from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
+import { fetchMenuByQrToken } from "../../services/customer/menu/showmenu.service";
 
 const CustOrder = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { qrToken: routeQrToken } = useParams();
+
+  // Extract QR token dynamically
+  const searchParams = new URLSearchParams(location.search);
+  const qrToken =
+    routeQrToken ||
+    searchParams.get("qrToken") ||
+    location.state?.qrToken ||
+    sessionStorage.getItem("customer_qrToken");
+
+  // Read customer-menu from React Query cache (0 duplicate API requests)
+  const { data: menuData } = useQuery({
+    queryKey: ["customer-menu", qrToken],
+    queryFn: () => fetchMenuByQrToken(qrToken),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    enabled: !!qrToken,
+  });
+
   const [orderType, setOrderType] = useState("Delivery");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,6 +37,16 @@ const CustOrder = () => {
   const [note, setNote] = useState("");
   const [tableNo, setTableNo] = useState("4");
   const [showOrderModal, setShowOrderModal] = useState(false);
+
+  // Default to "Dine In" if table qrType is DINE_IN
+  useEffect(() => {
+    if (menuData?.table?.qrType === "DINE_IN") {
+      setOrderType("Dine In");
+    }
+    if (menuData?.table?.tableNumber) {
+      setTableNo(String(menuData.table.tableNumber));
+    }
+  }, [menuData]);
   const [items, setItems] = useState([
     {
       id: 1,
@@ -73,22 +99,59 @@ const CustOrder = () => {
         <div className="order-card-wrapper">
           {/* Top White Section: Back Button + My Order Title */}
           <div className="order-white-header">
-            <button
-              className="order-back-btn"
-              onClick={() => navigate(-1)}
-              aria-label="Go back"
+            <div
+              className="order-header-nav-row"
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1rem",
+              }}
             >
-              <IoIosArrowBack size={20} />
-            </button>
-            <h1 className="order-main-title">My Order</h1>
+              <button
+                className="cart-back-btn"
+                onClick={() => navigate(-1)}
+                aria-label="Go Back"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  background: "none",
+                  border: "none",
+                  color: "#666",
+                  fontSize: "14px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  padding: "4px 0",
+                }}
+              >
+                            <IoIosArrowBack size={15} />
+
+                <span>Back</span>
+              </button>
+              <h1
+                className="cart-header-title"
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: "18px",
+                  fontWeight: 700,
+                  color: "#111111",
+                  margin: 0,
+                }}
+              >
+                My Order
+              </h1>
+              <div></div>
+            </div>
 
             {/* Order Type Tabs */}
             <div className="order-tabs-row">
               {orderTypes.map((type) => (
                 <button
                   key={type}
-                  className={`order-tab-btn ${orderType === type ? "active" : ""
-                    }`}
+                  className={`order-tab-btn ${
+                    orderType === type ? "active" : ""
+                  }`}
                   onClick={() => setOrderType(type)}
                 >
                   {type}

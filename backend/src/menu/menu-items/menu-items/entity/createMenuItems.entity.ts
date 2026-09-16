@@ -17,6 +17,8 @@ import { ItemVariation } from 'src/menu/menu-items/item-variation/entity/createI
 import { ItemCustomization } from 'src/menu/menu-items/item-customization/entity/createItemCustomization.entity';
 import { ItemAddon } from 'src/menu/menu-items/item-addons/entity/createItemAddons.entity';
 
+import { CustCartItems } from 'src/customer/carts/cart-items/entity/createCustCartItems.entity';
+
 @ObjectType()
 @Entity('menu_items')
 export class MenuItem {
@@ -86,6 +88,10 @@ export class MenuItem {
   @Field(() => [ItemAddon])
   @OneToMany(() => ItemAddon, (addon) => addon.menuItem)
   addons: Promise<ItemAddon[]>;
+
+  @Field(() => [CustCartItems], { nullable: true })
+  @OneToMany(() => CustCartItems, (cartItem) => cartItem.menuItem)
+  cartItems?: Promise<CustCartItems[]>;
 
   @Field()
   @CreateDateColumn({ name: 'created_at' })

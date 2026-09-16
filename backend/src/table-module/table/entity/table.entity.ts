@@ -16,6 +16,9 @@ import { TableSession } from 'src/table-module/table-section/entity/tableSession
 import { Customer } from 'src/customer/entity/customer.entity';
 import { QrType, TableStatus } from './enums/enums';
 
+import { CustCart } from 'src/customer/carts/cart/entity/createCustCart.entity';
+import { Orders } from 'src/customer/orders/order/entity/orders.entity';
+
 @ObjectType()
 @Entity('tables')
 export class Table {
@@ -85,6 +88,14 @@ export class Table {
   @Field(() => [Customer], { nullable: true })
   @OneToMany(() => Customer, (customer) => customer.table)
   customers: Promise<Customer[]>;
+
+  @Field(() => [CustCart], { nullable: true })
+  @OneToMany(() => CustCart, (cart) => cart.table)
+  carts?: Promise<CustCart[]>;
+
+  @Field(() => [Orders], { nullable: true })
+  @OneToMany(() => Orders, (order) => order.table)
+  orders?: Promise<Orders[]>;
 
   // ================= TIMESTAMPS =================
 

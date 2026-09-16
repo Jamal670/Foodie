@@ -13,6 +13,9 @@ import { ContactPersonDesignation } from './enums/branch.enums';
 import { Table } from 'src/table-module/table/entity/table.entity';
 import { Customer } from 'src/customer/entity/customer.entity';
 
+import { CustCart } from 'src/customer/carts/cart/entity/createCustCart.entity';
+import { Orders } from 'src/customer/orders/order/entity/orders.entity';
+
 @ObjectType()
 @Entity('branches')
 export class Branch {
@@ -39,6 +42,14 @@ export class Branch {
   @Field(() => [Customer], { nullable: true })
   @OneToMany(() => Customer, (customer) => customer.branch)
   customers: Promise<Customer[]>;
+
+  @Field(() => [CustCart], { nullable: true })
+  @OneToMany(() => CustCart, (cart) => cart.branch)
+  carts?: Promise<CustCart[]>;
+
+  @Field(() => [Orders], { nullable: true })
+  @OneToMany(() => Orders, (order) => order.branch)
+  orders?: Promise<Orders[]>;
 
   // ================= BRANCH INFO =================
 

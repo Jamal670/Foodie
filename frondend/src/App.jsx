@@ -11,6 +11,7 @@ import SubAdminSetting from "./pages/subAdminRoutes/SubAdminSetting";
 import CustMenu from "./pages/customer/CustMenu";
 import CustMenuList from "./pages/customer/CustMenuList";
 import CustMenuDetail from "./pages/customer/CustMenuDetail";
+import CustEditMenuDetial from "./pages/customer/CustEditMenuDetial";
 import CustCart from "./pages/customer/CustCart";
 import CustOrder from "./pages/customer/CustOrder";
 
@@ -78,8 +79,24 @@ function App() {
               element={<CustMenuDetail />}
             />
             <Route path="/customer/menu-details" element={<CustMenuDetail />} />
+            <Route
+              path="/customer/menu/edit/t/:qrToken/:menuItemId/:cartItemId"
+              element={<CustEditMenuDetial />}
+            />
+            <Route
+              path="/customer/menu/edit/:menuItemId/:cartItemId"
+              element={<CustEditMenuDetial />}
+            />
+            <Route
+              path="/customer/cart/t/:qrToken/:cartId"
+              element={<CustCart />}
+            />
             <Route path="/customer/cart/t/:qrToken" element={<CustCart />} />
             <Route path="/customer/cart" element={<CustCart />} />
+            <Route
+              path="/customer/menu-orders/t/:qrToken"
+              element={<CustOrder />}
+            />
             <Route path="/customer/menu-orders" element={<CustOrder />} />
 
             <Route

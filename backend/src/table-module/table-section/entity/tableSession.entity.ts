@@ -13,6 +13,7 @@ import { Field, ObjectType, Int } from '@nestjs/graphql';
 
 import { Table } from 'src/table-module/table/entity/table.entity';
 import { Customer } from 'src/customer/entity/customer.entity';
+import { Orders } from 'src/customer/orders/order/entity/orders.entity';
 
 @ObjectType()
 @Entity('table_sessions')
@@ -58,6 +59,10 @@ export class TableSession {
   @Field(() => [Customer], { nullable: true })
   @OneToMany(() => Customer, (customer) => customer.session)
   customers: Promise<Customer[]>;
+
+  @Field(() => [Orders], { nullable: true })
+  @OneToMany(() => Orders, (order) => order.tableSession)
+  orders?: Promise<Orders[]>;
 
   // ================= TIMESTAMPS =================
 
