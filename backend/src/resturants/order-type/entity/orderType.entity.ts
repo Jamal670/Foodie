@@ -9,7 +9,7 @@ import { Field, ObjectType, Int, Float } from '@nestjs/graphql';
 
 import { Restaurant } from '../../resturant/entity/resturant.entity';
 
-@ObjectType()
+@ObjectType('RestaurantOrderType')
 @Entity('order_types')
 export class OrderType {
   @Field(() => Int)

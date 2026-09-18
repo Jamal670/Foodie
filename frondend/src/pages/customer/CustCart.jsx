@@ -104,15 +104,14 @@ const CustCart = () => {
 
   const handlePlaceOrder = () => {
     if (cartItems.length === 0) return;
-    setOrderPlaced(true);
-    setTimeout(() => {
-      setOrderPlaced(false);
-      if (qrToken) {
-        navigate(`/customer/menu-orders/t/${qrToken}`);
-      } else {
-        navigate("/customer/menu-orders");
-      }
-    }, 1800);
+    const formattedPaymentMethod = paymentMethod === "Card" ? "CARD" : "CASH";
+    const targetPath = qrToken
+      ? `/customer/menu-orders/t/${qrToken}`
+      : "/customer/menu-orders";
+
+    navigate(targetPath, {
+      state: { paymentMethod: formattedPaymentMethod, paymentMethodLabel: paymentMethod, qrToken },
+    });
   };
 
   const cartItems = cartData?.items || [];

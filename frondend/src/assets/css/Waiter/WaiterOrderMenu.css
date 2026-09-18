@@ -1,0 +1,190 @@
+/* WaiterOrderMenu.css - Waiter Order & POS Menu Styles */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Main Page Container - Responsive layout matching CustMenuList */
+.waiter-order-menu-page {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.waiter-order-menu-container {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  min-height: calc(100vh - 1rem);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Page Header */
+.wom-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.wom-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.wom-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wom-restaurant-title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #000000;
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Tab Navigation Bar */
+.wom-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
+
+.wom-tab-btn {
+  padding: 0.65rem 1.75rem;
+  border-radius: 30px;
+  border: 1px solid transparent;
+  background-color: #f5f5f5;
+  color: #444444;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.wom-tab-btn:hover:not(.active) {
+  background-color: #ebebeb;
+  color: #000000;
+}
+
+.wom-tab-btn.active {
+  background: linear-gradient(135deg, #7911C3 0%, #3e263e 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(121, 17, 195, 0.35);
+}
+
+/* Content Area */
+.wom-content-area {
+  flex: 1;
+  width: 100%;
+}
+
+/* POS Placeholder Card */
+.wom-pos-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: #fcfcfc;
+  border: 2px dashed #e2e2e2;
+  border-radius: 20px;
+  margin: 1rem 0;
+  min-height: 360px;
+}
+
+.wom-pos-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0e6f7 0%, #e2d1f3 100%);
+  color: #7911C3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 10px rgba(121, 17, 195, 0.15);
+}
+
+.wom-pos-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+}
+
+.wom-pos-description {
+  font-size: 0.95rem;
+  color: #666666;
+  max-width: 440px;
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.wom-pos-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  background-color: rgba(121, 17, 195, 0.08);
+  color: #7911C3;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Responsive Scaling - matching CustMenuList */
+@media (min-width: 768px) {
+  .waiter-order-menu-container {
+    padding: 2rem;
+  }
+
+  .wom-restaurant-title {
+    font-size: 2.5rem;
+  }
+
+  .wom-tab-btn {
+    padding: 0.75rem 2.25rem;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .waiter-order-menu-container {
+    padding: 2.5rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .waiter-order-menu-container {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+}

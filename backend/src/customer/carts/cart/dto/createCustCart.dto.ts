@@ -24,6 +24,7 @@ export class AddCartItemDto {
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsInt()
+  @IsPositive()
   variationId?: number;
 
   @Field({ nullable: true })
@@ -34,6 +35,7 @@ export class AddCartItemDto {
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsInt()
+  @IsPositive()
   customizationId?: number;
 
   @Field({ nullable: true })

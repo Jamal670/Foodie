@@ -1,6 +1,6 @@
 import { InputType, Field } from '@nestjs/graphql';
-import { IsEnum, IsOptional } from 'class-validator';
-import { OrderType } from '../enums/orders.enum';
+import { IsEnum, IsOptional, IsString, IsEmail } from 'class-validator';
+import { OrderType, PaymentMethod } from '../enums/orders.enum';
 
 @InputType()
 export class CreateOrdersDto {
@@ -8,4 +8,23 @@ export class CreateOrdersDto {
   @IsEnum(OrderType)
   @IsOptional()
   orderType?: OrderType;
+
+  @Field(() => PaymentMethod)
+  @IsEnum(PaymentMethod)
+  paymentMethod: PaymentMethod;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phoneNo?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 }

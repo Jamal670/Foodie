@@ -15,6 +15,11 @@ export enum OrderStatus {
   CANCELLED = 'CANCELLED',
 }
 
+export enum PaymentMethod {
+  CARD = 'CARD',
+  CASH = 'CASH',
+}
+
 registerEnumType(OrderType, {
   name: 'OrderType',
   description: 'Type of order: DINE_IN, TAKEAWAY, or DELIVERY',
@@ -23,4 +28,9 @@ registerEnumType(OrderType, {
 registerEnumType(OrderStatus, {
   name: 'OrderStatus',
   description: 'Current status of the order',
+});
+
+registerEnumType(PaymentMethod, {
+  name: 'PaymentMethod',
+  description: 'Payment method for the order: CARD or CASH',
 });

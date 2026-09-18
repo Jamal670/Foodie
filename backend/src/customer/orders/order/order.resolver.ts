@@ -17,48 +17,20 @@ export class OrderResolver {
   constructor(private readonly orderService: OrderService) {}
 
   @UseGuards(CustomerJwtAuthGuard)
-  @Mutation(() => Orders, { description: 'Places an order from the active dining session cart' })
+  @Mutation(() => Orders)
   async createOrder(
-    @Args('dto', { nullable: true }) dto: CreateOrdersDto,
+    @Args('input') input: CreateOrdersDto,
     @CurrentSession() session: TableSession,
     @CurrentCustomer() customer: Customer,
   ): Promise<Orders> {
-    if (!session || !session.id) {
-      throw new BadRequestException(
-        'Dining session has expired. Please rescan QR code to continue.',
-      );
-    }
-    return this.orderService.createOrderFromCart(
-      dto || {},
-      session,
-      customer,
-    );
+    return this.orderService.createOrder(input, session, customer);
   }
 
   @UseGuards(CustomerJwtAuthGuard)
-  @Query(() => Orders, { description: 'Gets details of a specific order in the current session' })
-  async getOrderById(
-    @Args('id', { type: () => Int }) id: number,
-    @CurrentSession() session: TableSession,
-  ): Promise<Orders> {
-    if (!session || !session.id) {
-      throw new BadRequestException(
-        'Dining session has expired. Please rescan QR code to continue.',
-      );
-    }
-    return this.orderService.getOrderById(id, session.id);
-  }
-
-  @UseGuards(CustomerJwtAuthGuard)
-  @Query(() => [Orders], { description: 'Gets all orders placed during the current dining session' })
-  async getMyOrders(
-    @CurrentSession() session: TableSession,
-  ): Promise<Orders[]> {
-    if (!session || !session.id) {
-      throw new BadRequestException(
-        'Dining session has expired. Please rescan QR code to continue.',
-      );
-    }
-    return this.orderService.getOrdersForSession(session.id);
+  @Query(() => Orders, { nullable: true })
+  async getOrder(
+    @Args('orderId', { type: () => Int }) orderId: number,
+  ): Promise<Orders | null> {
+    return this.orderService.findOrderById(orderId);
   }
 }

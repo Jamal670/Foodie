@@ -15,7 +15,18 @@ import { MenuItem } from 'src/menu/menu-items/menu-items/entity/createMenuItems.
 
 @ObjectType()
 @Entity('cust_cart_items')
-@Index('UQ_cust_cart_items_unique_item', ['cartId', 'menuItemId', 'itemVariationName', 'itemCustomizationName'], { unique: true })
+@Index(
+  'UQ_cust_cart_items_unique_item',
+  [
+    'cartId',
+    'menuItemId',
+    'itemVariationName',
+    'itemCustomizationName',
+    'variationId',
+    'customizationId',
+  ],
+  { unique: true },
+)
 export class CustCartItems {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
@@ -30,6 +41,14 @@ export class CustCartItems {
   @Field(() => Int, { nullable: true })
   @Column({ nullable: true })
   menuItemId?: number;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  variationId?: number;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  customizationId?: number;
 
   // ================= SNAPSHOT / DENORMALIZED FIELDS =================
 

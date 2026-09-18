@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderItems } from './entity/OrderItems.entity';
 
+import { EntityManager } from 'typeorm';
+
 @Injectable()
 export class OrderItemsService {
   constructor(
@@ -10,10 +12,23 @@ export class OrderItemsService {
     private readonly orderItemsRepository: Repository<OrderItems>,
   ) {}
 
-  async findByOrderId(orderId: number): Promise<OrderItems[]> {
-    return this.orderItemsRepository.find({
-      where: { orderId },
-      relations: ['variations', 'customizations'],
+  async createOrderItemTransactional(
+    entityManager: EntityManager,
+    orderId: number,
+    menuItemId: number,
+    menuItemName: string,
+    quantity: number,
+    unitPrice: number,
+    totalPrice: number,
+  ): Promise<OrderItems> {
+    const item = entityManager.create(OrderItems, {
+      orderId,
+      menuItemId,
+      menuItemName,
+      quantity,
+      unitPrice,
+      totalPrice,
     });
+    return entityManager.save(OrderItems, item);
   }
 }

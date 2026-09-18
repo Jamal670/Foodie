@@ -13,7 +13,9 @@ import { MenuItem } from 'src/menu/menu-items/menu-items/entity/createMenuItems.
 export interface VerifiedItemContext {
   verifiedPrice: number;
   menuItemName: string;
+  variationId: number | null;
   itemVariationName: string | null;
+  customizationId: number | null;
   itemCustomizationName: string | null;
   image: string | null;
 }
@@ -53,7 +55,9 @@ export class CartItemsService {
     }
 
     let calculatedPrice: number;
+    let resolvedVariationId: number | null = null;
     let resolvedVariationName: string | null = null;
+    let resolvedCustomizationId: number | null = null;
     let resolvedCustomizationName: string | null = null;
 
     // 1. Resolve variation (by variationId or itemVariationName)
@@ -67,6 +71,7 @@ export class CartItemsService {
       if (!matchingVar) {
         throw new BadRequestException('Invalid item variation specified.');
       }
+      resolvedVariationId = matchingVar.id;
       resolvedVariationName = matchingVar.name;
       calculatedPrice = Number(matchingVar.price);
     } else {
@@ -87,6 +92,7 @@ export class CartItemsService {
       if (!matchingCustom) {
         throw new BadRequestException('Invalid item customization specified.');
       }
+      resolvedCustomizationId = matchingCustom.id;
       resolvedCustomizationName = matchingCustom.name;
       calculatedPrice += Number(matchingCustom.price);
     }
@@ -108,18 +114,22 @@ export class CartItemsService {
     return {
       verifiedPrice: calculatedPrice,
       menuItemName: dto.menuItemName || menuItem.name,
+      variationId: resolvedVariationId,
       itemVariationName: resolvedVariationName,
+      customizationId: resolvedCustomizationId,
       itemCustomizationName: resolvedCustomizationName,
       image: resolvedImage,
     };
   }
 
   /**
-   * Finds existing cart item scoped by (cartId, menuItemId, itemVariationName, itemCustomizationName).
+   * Finds existing cart item scoped by (cartId, menuItemId, variationId/itemVariationName, customizationId/itemCustomizationName).
    */
   async findCartItem(
     cartId: number,
     menuItemId: number,
+    variationId?: number | null,
+    customizationId?: number | null,
     itemVariationName?: string | null,
     itemCustomizationName?: string | null,
     entityManager?: EntityManager,
@@ -128,14 +138,29 @@ export class CartItemsService {
       ? entityManager.getRepository(CustCartItems)
       : this.cartItemsRepository;
 
-    const whereClause: any = {
-      cartId,
-      menuItemId,
-      itemVariationName: itemVariationName ? itemVariationName.trim() : IsNull(),
-      itemCustomizationName: itemCustomizationName ? itemCustomizationName.trim() : IsNull(),
-    };
+    const qb = repo
+      .createQueryBuilder('item')
+      .where('item.cartId = :cartId', { cartId })
+      .andWhere('item.menuItemId = :menuItemId', { menuItemId })
+      .andWhere('item.variationId IS NOT DISTINCT FROM :variationId', {
+        variationId: variationId ?? null,
+      })
+      .andWhere('item.customizationId IS NOT DISTINCT FROM :customizationId', {
+        customizationId: customizationId ?? null,
+      });
 
-    return repo.findOne({ where: whereClause });
+    if (variationId == null && itemVariationName) {
+      qb.andWhere('item.itemVariationName = :itemVariationName', {
+        itemVariationName: itemVariationName.trim(),
+      });
+    }
+    if (customizationId == null && itemCustomizationName) {
+      qb.andWhere('item.itemCustomizationName = :itemCustomizationName', {
+        itemCustomizationName: itemCustomizationName.trim(),
+      });
+    }
+
+    return qb.getOne();
   }
 
   /**
@@ -155,7 +180,9 @@ export class CartItemsService {
       cartId,
       menuItemId: dto.menuItemId,
       menuItemName: context.menuItemName,
+      variationId: context.variationId ?? undefined,
       itemVariationName: context.itemVariationName ? context.itemVariationName.trim() : undefined,
+      customizationId: context.customizationId ?? undefined,
       itemCustomizationName: context.itemCustomizationName ? context.itemCustomizationName.trim() : undefined,
       quantity: dto.quantity,
       price: context.verifiedPrice * dto.quantity,
@@ -169,6 +196,8 @@ export class CartItemsService {
         const existing = await this.findCartItem(
           cartId,
           dto.menuItemId,
+          context.variationId,
+          context.customizationId,
           context.itemVariationName,
           context.itemCustomizationName,
           entityManager,
@@ -215,6 +244,8 @@ export class CartItemsService {
     const existing = await this.findCartItem(
       cartId,
       dto.menuItemId,
+      context.variationId,
+      context.customizationId,
       context.itemVariationName,
       context.itemCustomizationName,
       entityManager,

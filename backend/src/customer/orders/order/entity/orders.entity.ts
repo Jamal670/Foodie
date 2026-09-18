@@ -16,7 +16,7 @@ import { Table } from 'src/table-module/table/entity/table.entity';
 import { TableSession } from 'src/table-module/table-section/entity/tableSession.entity';
 import { Customer } from 'src/customer/entity/customer.entity';
 import { OrderItems } from '../../order-items/entity/OrderItems.entity';
-import { OrderType, OrderStatus } from '../enums/orders.enum';
+import { OrderType, OrderStatus, PaymentMethod } from '../enums/orders.enum';
 
 @ObjectType()
 @Entity('orders')
@@ -68,6 +68,15 @@ export class Orders {
     default: OrderStatus.PENDING,
   })
   status: OrderStatus;
+
+  @Field(() => PaymentMethod)
+  @Column({
+    name: 'payment_method',
+    type: 'enum',
+    enum: PaymentMethod,
+    default: PaymentMethod.CASH,
+  })
+  paymentMethod: PaymentMethod;
 
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2, default: 0 })

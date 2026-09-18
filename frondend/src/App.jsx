@@ -14,8 +14,11 @@ import CustMenuDetail from "./pages/customer/CustMenuDetail";
 import CustEditMenuDetial from "./pages/customer/CustEditMenuDetial";
 import CustCart from "./pages/customer/CustCart";
 import CustOrder from "./pages/customer/CustOrder";
+import CustOrderCompTimer from "./pages/customer/CustOrderCompTimer";
 
+//Waiter
 import WaiterOrderHistory from "./pages/Waiter/WaiterOrderHistory";
+import WaiterOrderMenu from "./pages/Waiter/WaiterOrderMenu";
 
 import Login from "./pages/auth/login";
 import Signup from "./pages/auth/signup";
@@ -98,10 +101,30 @@ function App() {
               element={<CustOrder />}
             />
             <Route path="/customer/menu-orders" element={<CustOrder />} />
-
+            <Route
+              path="/customer/order-timer/t/:qrToken/:orderId"
+              element={<CustOrderCompTimer />}
+            />
+            <Route
+              path="/customer/order-timer/:orderId"
+              element={<CustOrderCompTimer />}
+            />
+            <Route
+              path="/customer/order-timer/t/:qrToken"
+              element={<CustOrderCompTimer />}
+            />
+            <Route
+              path="/customer/order-timer"
+              element={<CustOrderCompTimer />}
+            />
+            
             <Route
               path="/waiter/order-history"
               element={<WaiterOrderHistory />}
+            />
+            <Route
+              path="/waiter/order-menu"
+              element={<WaiterOrderMenu />}
             />
 
             <Route path="/login" element={<Login />} />
