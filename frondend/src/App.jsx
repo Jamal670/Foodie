@@ -19,6 +19,8 @@ import CustOrderCompTimer from "./pages/customer/CustOrderCompTimer";
 //Waiter
 import WaiterOrderHistory from "./pages/Waiter/WaiterOrderHistory";
 import WaiterOrderMenu from "./pages/Waiter/WaiterOrderMenu";
+import WaiterOrderList from "./pages/Waiter/WaiterMenuList";
+import WaiterOrderDetails from "./pages/Waiter/WaiterOrderDetails";
 
 import Login from "./pages/auth/login";
 import Signup from "./pages/auth/signup";
@@ -125,6 +127,14 @@ function App() {
             <Route
               path="/waiter/order-menu"
               element={<WaiterOrderMenu />}
+            />
+            <Route
+              path="/waiter/order-list"
+              element={<WaiterOrderList />}
+            />
+            <Route
+              path="/waiter/order-details"
+              element={<WaiterOrderDetails />}
             />
 
             <Route path="/login" element={<Login />} />

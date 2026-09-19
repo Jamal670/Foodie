@@ -34,9 +34,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 1rem;
+  padding-bottom: 0;
+  width: 100%;
 }
 
 .wom-header-top {
@@ -50,10 +50,11 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .wom-restaurant-title {
-  font-size: 2.25rem;
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
   font-weight: 800;
   color: #000000;
   margin: 0;
@@ -66,7 +67,10 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  width: 100%;
 }
 
 .wom-tab-btn {
@@ -160,10 +164,66 @@
   font-weight: 600;
 }
 
-/* Responsive Scaling - matching CustMenuList */
-@media (min-width: 768px) {
+/* Responsive Scaling - Mobile (< 768px) */
+@media (max-width: 767px) {
   .waiter-order-menu-container {
-    padding: 2rem;
+    padding: 0.85rem;
+    border-radius: 16px;
+  }
+
+  .wom-header {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .wom-title-group {
+    gap: 0.5rem;
+  }
+
+  .wom-restaurant-title {
+    font-size: 1.5rem;
+  }
+
+  .wom-tabs-bar {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .wom-tab-btn {
+    flex: 1;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
+    border-radius: 22px;
+  }
+}
+
+/* Responsive Scaling - Tablet (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .waiter-order-menu-container {
+    padding: 1.5rem;
+  }
+
+  .wom-restaurant-title {
+    font-size: 2rem;
+  }
+
+  .wom-tabs-bar {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .wom-tab-btn {
+    padding: 0.65rem 1.6rem;
+    font-size: 0.9rem;
+    border-radius: 26px;
+  }
+}
+
+/* Responsive Scaling - Desktop (>= 992px) */
+@media (min-width: 992px) {
+  .waiter-order-menu-container {
+    padding: 2.5rem;
   }
 
   .wom-restaurant-title {
@@ -176,15 +236,133 @@
   }
 }
 
-@media (min-width: 992px) {
-  .waiter-order-menu-container {
-    padding: 2.5rem;
-  }
-}
-
 @media (min-width: 1200px) {
   .waiter-order-menu-container {
     max-width: 1140px;
     margin: 0 auto;
+  }
+}
+
+/* ==================== POS Visual Reference Card Grid (Reference Image Styling) ==================== */
+
+.pos-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pos-ref-card {
+  border-radius: 30px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  position: relative;
+  background-color: #ffffff;
+  aspect-ratio: 189 / 240;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pos-ref-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.pos-ref-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  border-radius: 30px;
+}
+
+.pos-ref-card:hover .pos-ref-image {
+  transform: scale(1.03);
+}
+
+.pos-ref-overlay {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 2px 4px 2px 14px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+.pos-ref-title-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding-right: 0.5rem;
+}
+
+.pos-ref-title {
+  font-size: clamp(0.85rem, 1.3vw, 1.05rem);
+  font-weight: 700;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.pos-ref-subtext {
+  font-size: clamp(0.7rem, 1vw, 0.82rem);
+  font-weight: 600;
+  color: #7911C3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-ref-circle-btn {
+  width: 40px;
+  height: 28px;
+  min-width: 36px;
+  border-radius: 25px;
+  background: linear-gradient(to left, #9146d8 30%, #000000);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 2px 8px rgba(121, 17, 195, 0.35);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.pos-ref-circle-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(121, 17, 195, 0.5);
+}
+
+@media (min-width: 768px) {
+  .pos-ref-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .pos-ref-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
   }
 }

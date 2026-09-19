@@ -14,42 +14,42 @@ const sampleOrders = [
     date: "12 Feb, 2025",
     time: "7:30 pm",
     items: [
-      { sr: 1, name: "Cheeseburger", quantity: 2, unitPrice: 500, total: 1000 },
-      { sr: 2, name: "Large Fries", quantity: 1, unitPrice: 300, total: 300 },
-      { sr: 3, name: "Chicken Wrap", quantity: 1, unitPrice: 450, total: 450 },
-      { sr: 4, name: "Cold Drinks", quantity: 2, unitPrice: 150, total: 300 },
+      { sr: 1, name: "Cheeseburger", quantity: 2, customization: "Extra Cheese, No Onion", variation: "Large", unitPrice: 500, total: 1000 },
+      { sr: 2, name: "Large Fries", quantity: 1, customization: "Extra Dip", variation: "Regular", unitPrice: 300, total: 300 },
+      { sr: 3, name: "Chicken Wrap", quantity: 1, customization: "-", variation: "Spicy", unitPrice: 450, total: 450 },
+      { sr: 4, name: "Cold Drinks", quantity: 2, customization: "Chilled, No Ice", variation: "500ml", unitPrice: 150, total: 300 },
     ],
     tax: 5,
   },
   {
     id: 8946,
     image: breakfastImg,
-    orderType: "Dine In",
+    orderType: "Takeaway",
     tableNo: "07",
-    customerName: "Ahmed",
+    customerName: "Ali Ahmed",
     date: "12 Feb, 2025",
-    time: "7:30 pm",
+    time: "7:45 pm",
     items: [
-      { sr: 1, name: "Cheeseburger", quantity: 2, unitPrice: 500, total: 1000 },
-      { sr: 2, name: "Large Fries", quantity: 1, unitPrice: 300, total: 300 },
-      { sr: 3, name: "Chicken Wrap", quantity: 1, unitPrice: 450, total: 450 },
-      { sr: 4, name: "Cold Drinks", quantity: 2, unitPrice: 150, total: 300 },
+      { sr: 1, name: "Cheeseburger", quantity: 2, customization: "No Mayo", variation: "Medium", unitPrice: 500, total: 1000 },
+      { sr: 2, name: "Large Fries", quantity: 1, customization: "-", variation: "Large", unitPrice: 300, total: 300 },
+      { sr: 3, name: "Chicken Wrap", quantity: 1, customization: "Extra Sauce", variation: "Mild", unitPrice: 450, total: 450 },
+      { sr: 4, name: "Cold Drinks", quantity: 2, customization: "-", variation: "250ml", unitPrice: 150, total: 300 },
     ],
     tax: 5,
   },
   {
     id: 8376,
     image: breakfastImg,
-    orderType: "Dine In",
+    orderType: "Delivery",
     tableNo: "07",
-    customerName: "Ahmed",
+    customerName: "Ghori town, phase 07..",
     date: "12 Feb, 2025",
-    time: "7:30 pm",
+    time: "8:00 pm",
     items: [
-      { sr: 1, name: "Cheeseburger", quantity: 2, unitPrice: 500, total: 1000 },
-      { sr: 2, name: "Large Fries", quantity: 1, unitPrice: 300, total: 300 },
-      { sr: 3, name: "Chicken Wrap", quantity: 1, unitPrice: 450, total: 450 },
-      { sr: 4, name: "Cold Drinks", quantity: 2, unitPrice: 150, total: 300 },
+      { sr: 1, name: "Cheeseburger", quantity: 2, customization: "Double Patty", variation: "Large", unitPrice: 500, total: 1000 },
+      { sr: 2, name: "Large Fries", quantity: 1, customization: "Salted", variation: "Large", unitPrice: 300, total: 300 },
+      { sr: 3, name: "Chicken Wrap", quantity: 1, customization: "-", variation: "Spicy", unitPrice: 450, total: 450 },
+      { sr: 4, name: "Cold Drinks", quantity: 2, customization: "Less Ice", variation: "1.5L", unitPrice: 150, total: 300 },
     ],
     tax: 5,
   },
@@ -73,11 +73,6 @@ const OrderServings = () => {
       {sampleOrders.map((order) => {
         const isExpanded = expandedOrder === order.id;
         const total = calculateTotal(order.items, order.tax);
-        const subtotal = order.items.reduce(
-          (sum, item) => sum + item.total,
-          0
-        );
-        const taxAmount = (subtotal * order.tax) / 100;
 
         return (
           <div key={order.id} className="woh-order-card">
@@ -106,10 +101,9 @@ const OrderServings = () => {
                   </div>
 
                   <button
-                    className="woh-done-btn"
+                    className="woh-done-btns"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // Handle done action here
                       console.log(`Order ${order.id} marked as done`);
                     }}
                   >
@@ -117,7 +111,7 @@ const OrderServings = () => {
                   </button>
                 </div>
 
-                {/* Row 2: Order Type and Table Info (Left Side with Borders) */}
+                {/* Row 2: Order Type and Table Info */}
                 <div
                   className="woh-content-row-2"
                   onClick={() => toggleOrder(order.id)}
@@ -131,7 +125,7 @@ const OrderServings = () => {
                       <span className="woh-table-badge">{order.customerName}</span>
                     )}
                     {order.orderType === "Delivery" && (
-                      <span className="woh-table-badge">{order.address}</span>
+                      <span className="woh-table-badge">{order.customerName}</span>
                     )}
                   </div>
                 </div>
@@ -141,13 +135,15 @@ const OrderServings = () => {
             {/* Expanded Order Details */}
             {isExpanded && (
               <div className="woh-order-details">
-                {/* Items Table */}
+                {/* Items Table - Single line rows, horizontally scrollable */}
                 <div className="woh-table-container">
                   <table className="woh-items-table">
                     <thead>
                       <tr>
                         <th>Sr</th>
-                        <th>Items</th>
+                        <th>Item</th>
+                        <th>Customization</th>
+                        <th>Variation</th>
                         <th>Quantity</th>
                         <th>Unit Price</th>
                         <th>Total</th>
@@ -157,7 +153,9 @@ const OrderServings = () => {
                       {order.items.map((item) => (
                         <tr key={item.sr}>
                           <td>{item.sr}</td>
-                          <td>{item.name}</td>
+                          <td className="woh-cell-item-name">{item.name}</td>
+                          <td>{item.customization || "-"}</td>
+                          <td>{item.variation || "-"}</td>
                           <td>{String(item.quantity).padStart(2, "0")}</td>
                           <td>{item.unitPrice} pkr</td>
                           <td>{item.total} pkr</td>
@@ -174,31 +172,38 @@ const OrderServings = () => {
                     <span className="woh-total-label-tax">+Tax ({order.tax}%)</span>
                   </div>
                   <div className="woh-total-amount">
-                    {total.toFixed(1)} pkr
+                    RS. {total.toFixed(1)}
                   </div>
                 </div>
 
-                {/* Customer Info */}
-                <div className="woh-customer-info">
-                  {/* First Row: Customer Name and Date */}
-                  <div className="woh-customer-row">
-                    <div className="woh-info-row">
-                      <span className="woh-info-value">
-                        <span className="woh-info-label">Name:</span> {order.customerName}
-                      </span>
-                      <span className="woh-info-value">
-                        <span className="woh-info-label">Date:</span> {order.date}
-                      </span>
-                    </div>
-                  </div>
-                  {/* Second Row: Time */}
-                  <div className="woh-customer-row">
-                    <div className="woh-info-row">
-                      <span className="woh-info-value">
-                        <span className="woh-info-label">Time:</span> {order.time}
-                      </span>
-                    </div>
-                  </div>
+                {/* Customer Info - Single Horizontal Scrollable Row */}
+                <div className="woh-customer-info-single-row">
+                  <span className="woh-info-badge">
+                    <span className="woh-info-label">Name:</span> {order.customerName}
+                  </span>
+                  <span className="woh-info-badge">
+                    <span className="woh-info-label">Date:</span> {order.date}
+                  </span>
+                  <span className="woh-info-badge">
+                    <span className="woh-info-label">Time:</span> {order.time}
+                  </span>
+                  
+                </div>
+
+                {/* Action Buttons Row Immediately Below Customer Info */}
+                <div className="woh-action-buttons-row">
+                  <button
+                    className="woh-action-btn woh-btn-add-items"
+                    onClick={() => console.log(`Add Items to order ${order.id}`)}
+                  >
+                    Add Items
+                  </button>
+                  <button
+                    className="woh-action-btn woh-btn-confirmed"
+                    onClick={() => console.log(`Order ${order.id} confirmed`)}
+                  >
+                    Confirmed
+                  </button>
                 </div>
               </div>
             )}
@@ -210,4 +215,3 @@ const OrderServings = () => {
 };
 
 export default OrderServings;
-

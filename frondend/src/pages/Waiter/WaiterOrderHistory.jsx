@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "../../assets/css/Waiter/WaiterOrderHistory.css";
 import FoodieLogo from "../../components/common/FoodieLogo";
 import OrderServings from "../../components/waiter/OrderServings";
-import PendingPayments from "../../components/waiter/PendingPayments";
+import PendingPayments from "../../components/waiter/POS";
 
 const WaiterOrderHistory = () => {
   const [activeTab, setActiveTab] = useState("orderServings");

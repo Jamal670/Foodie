@@ -115,39 +115,48 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  width: 100%;
 }
 
-/* Order Card */
+/* Order Card - CustMenuList style card treatment in list layout */
 .woh-order-card {
   background-color: #F4F2F6;
   border-radius: 25px;
-  padding: 0.4rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 0.2rem;
+  padding: 0.4rem 1rem 0.4rem 0.4rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  margin-bottom: 0rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.woh-order-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
 }
 
 /* Order Card Content Layout */
 .woh-order-card-content {
   display: flex;
-  align-items: stretch;
-  gap: 1rem;
+  align-items: center;
+  gap: 1.25rem;
 }
 
-/* Left Section: Image - Full Height */
+/* Left Section: Image */
 .woh-order-image-container {
   flex-shrink: 0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
 }
 
 .woh-order-image {
-  width: 120px;
-  height: 100%;
-  min-height: 110px;
-  border-radius: 25%;
+  width: 100px;
+  height: 100px;
+  min-height: 100px;
+  border-radius: 20px;
   overflow: hidden;
-  background-color: #f0f0f0;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background-color: #f5f5f5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -195,7 +204,6 @@
   align-items: center;
   cursor: pointer;
   padding-top: 0.5rem;
-  border-top: 1px solid #f0f0f0;
 }
 
 .woh-order-info-left {
@@ -212,7 +220,7 @@
   padding: 0.4rem 0.9rem;
   border: 2px solid #ffffff;
   border-radius: 20px;
-  background-color: #F4F2F6;
+  background-color: #f7f7f9;
   display: inline-block;
 }
 
@@ -223,7 +231,7 @@
   padding: 0.4rem 0.9rem;
   border: 2px solid #ffffff;
   border-radius: 20px;
-  background-color: #F4F2F6;
+  background-color: #f7f7f9;
   display: inline-block;
 }
 
@@ -249,7 +257,7 @@
   display: inline-block;
 }
 
-.woh-done-btn {
+.woh-done-btns {
   background: linear-gradient(to right, #0D0C0D 30%, #7911C3);
   color: white;
   border: none;
@@ -265,7 +273,7 @@
   white-space: nowrap;
 }
 
-.woh-done-btn:hover {
+.woh-done-btns:hover {
   background: linear-gradient(to right, #0D0C0D 30%, #7911C3);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(121, 17, 195, 0.4);
@@ -296,19 +304,23 @@
   flex-wrap: wrap;
 }
 
-/* Items Table */
+/* Items Table - Single line rows, horizontally scrollable */
 .woh-table-container {
   overflow-x: auto;
   margin-bottom: 1.5rem;
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #f0f0f0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .woh-items-table {
   width: 100%;
+  min-width: 650px;
   border-collapse: collapse;
   font-size: 0.9rem;
   background-color: #ffffff;
+  white-space: nowrap;
 }
 
 .woh-items-table thead {
@@ -316,11 +328,12 @@
 }
 
 .woh-items-table th {
-  padding: 0.875rem 0.75rem;
+  padding: 0.875rem 0.85rem;
   text-align: left;
   font-weight: 600;
   font-size: 0.875rem;
   border-bottom: 2px solid var(--border-light);
+  white-space: nowrap;
 }
 
 .woh-items-table th:nth-child(1),
@@ -330,15 +343,23 @@
 
 .woh-items-table th:nth-child(3),
 .woh-items-table th:nth-child(4),
-.woh-items-table th:nth-child(5) {
+.woh-items-table th:nth-child(5),
+.woh-items-table th:nth-child(6),
+.woh-items-table th:nth-child(7) {
   color: var(--accent-purple);
 }
 
 .woh-items-table td {
-  padding: 0.875rem 0.75rem;
+  padding: 0.875rem 0.85rem;
   color: var(--text-dark);
   border-bottom: 1px solid #f0f0f0;
   font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.woh-cell-item-name {
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
 .woh-items-table tbody tr:last-child td {
@@ -354,13 +375,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 0;
+  padding:    1.25rem 0;
   border-top: 2px solid var(--border-light);
   margin-bottom: 1.5rem;
 }
 
 .woh-total-label {
-  font-size: 1.1rem;
+  font-size: 1.1em;
   font-weight: 600;
   color: var(--text-dark);
   display: flex;
@@ -369,72 +390,118 @@
 }
 
 .woh-total-label-text {
-  font-weight: 700;
-}
-
-.woh-total-label-tax {
-  font-weight: 400;
-}
-
-.woh-total-amount {
-  font-size: 1.35rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text-dark);
 }
 
-/* Customer Info */
-.woh-customer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
+.woh-total-label-tax {
+  font-weight: 400;
+  font-size: 0.7rem;
 }
 
-.woh-customer-row {
-  display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: flex-start;
+.woh-total-amount {
+  font-size:  1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
 }
 
-.woh-customer-row:last-child {
-  width: 100%;
-}
-
-.woh-customer-row:last-child .woh-info-row {
-  width: auto;
-  max-width: none;
-}
-
-.woh-info-row {
+/* Customer Info - Single Horizontal Scrollable Row */
+.woh-customer-info-single-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 1.5rem;
-  flex: 0 0 auto;
-  min-width: 0;
+  gap: 0.75rem;
+  width: 100%;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 0.5rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.woh-info-badge {
+  font-size: clamp(0.6rem,0.7rem,0.8rem);
+  color: #555555;
+  font-weight: 600;
+  background-color: #f5f5f5;
+  padding:    0.55rem 0.8rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e0e0e0;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .woh-info-label {
-  font-size: 0.9rem;
-  color: #C3C0C0;
+  font-size: 0.7rem;
+  color: #999999;
   font-weight: 500;
   white-space: nowrap;
 }
 
-.woh-info-value {
-  font-size: 0.9rem;
-  color: #817676;
-  font-weight: 600;
-  background-color: #f5f5f5;
-  padding: 0.75rem 1rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e0e0e0;
-  min-width: 120px;
-  text-align: left;
+/* Action Buttons Row Immediately Below Customer Info - Right Aligned & Compact */
+.woh-action-buttons-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #f0f0f0;
+  flex-wrap: nowrap;
+  width: 100%;
 }
+
+.woh-action-btn {
+  flex: initial;
+  width: auto;
+  min-width: 0;
+  padding: 0.45rem 1.15rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  border: none;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.woh-btn-add-items {
+  background-color: #ffffff;
+  color: #7911C3;
+  border: 2px solid #7911C3;
+  box-shadow: 0 2px 6px rgba(121, 17, 195, 0.12);
+}
+
+.woh-btn-add-items:hover {
+  background-color: #7911C3;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(121, 17, 195, 0.3);
+}
+
+.woh-btn-confirmed {
+  background: linear-gradient(135deg, #7911C3 0%, #0D0C0D 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(121, 17, 195, 0.3);
+}
+
+.woh-btn-confirmed:hover {
+  background: linear-gradient(135deg, #9146d8 0%, #0D0C0D 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(121, 17, 195, 0.4);
+}
+
 
 /* Pending Payments Card Styles */
 .woh-payment-card {
@@ -566,8 +633,9 @@
   }
 
   .woh-orders-container {
-    max-width: 900px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
   }
 }
 
@@ -594,7 +662,7 @@
     font-size: 1rem;
   }
 
-  .woh-done-btn {
+  .woh-done-btns {
     padding: 0.4rem 1rem;
     font-size: 0.85rem;
   }
@@ -609,8 +677,8 @@
   }
 
   .woh-total-summary {
-    padding: 1.1rem 0;
-    margin-bottom: 1.4rem;
+    padding: 0rem 0;
+    margin-bottom: 0.5rem;
   }
 
   .woh-total-label {
@@ -704,9 +772,9 @@
     min-width: 0;
   }
 
-  .woh-done-btn {
+  .woh-done-btns {
     flex: 1;
-    min-width: 100px;
+    max-width: 70px;
     padding: 0.4rem 0rem;
     font-size: 0.85rem;
   }
@@ -728,17 +796,38 @@
   }
 
   .woh-items-table {
+    min-width: 520px;
     font-size: 0.75rem;
   }
 
-  .woh-items-table th,
+  .woh-items-table th {
+    font-size: 0.75rem;
+    padding: 0.45rem 0.5rem;
+  }
+
   .woh-items-table td {
-    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.5rem;
+  }
+
+  .woh-action-buttons-row {
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .woh-action-btn {
+    flex: initial;
+    width: auto;
+    padding: 0.38rem 0.85rem;
+    font-size: 0.78rem;
+    border-radius: 8px;
   }
 
   .woh-total-summary {
-    padding: 1rem 0;
-    margin-bottom: 1.25rem;
+    padding:    0rem 0;
+    margin-bottom: 0.5rem;
   }
 
   .woh-total-label {
@@ -839,7 +928,7 @@
     font-size: 0.95rem;
   }
 
-  .woh-done-btn {
+  .woh-done-btns {
     padding: 0.4rem 0rem;
     font-size: 0.8rem;
     min-width: 80px;
@@ -861,7 +950,7 @@
   }
 
   .woh-total-summary {
-    padding: 0.875rem 0;
+    padding: 0rem 0;
     margin-bottom: 1rem;
   }
 
@@ -899,7 +988,7 @@
   }
 
   .woh-info-label {
-    font-size: 0.85rem;
+    font-size: 0.6rem;
   }
 
   .woh-info-value {
