@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Container } from "react-bootstrap";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IoIosArrowBack } from "react-icons/io";
-import { FaShoppingCart } from "react-icons/fa";
+import { FaShoppingCart, FaShoppingBag } from "react-icons/fa";
 import FoodieLogo from "../../components/common/FoodieLogo";
 import "../../assets/css/Waiter/WaiterMenuList.css";
 import breakfastImg from "/images/breakfast.png";
@@ -53,7 +53,14 @@ const WaiterMenuList = () => {
                             Menu List
                         </h1>
                     </div>
-                    <div></div>
+                    <div className="wod-cart-wrapper">
+                        <img
+                            src="/images/grocery-store.png"
+                            alt="Shopping Cart"
+                            className="wod-cart-image"
+                            onClick={() => navigate("/waiter/cart")}
+                        />
+                    </div>
                 </div>
 
                 {/* Subcategory Tabs (Level 2 Tabs) - Pill Tabs matching Reference Image */}
@@ -74,7 +81,7 @@ const WaiterMenuList = () => {
                 {/* Food Items Grid View - Staggered 2-column mobile layout matching reference image */}
                 <div className="wml-grid">
                     {filteredItems.map((item) => (
-                        <div key={item.id} className="wml-item-wrapper">
+                        <div key={item.id} className="wml-item-wrapper" onClick={() => navigate('/waiter/order-details')}>
                             {/* Item Title rendered OUTSIDE and ABOVE the card image */}
                             <span className="wml-item-outside-name">{item.name}</span>
 

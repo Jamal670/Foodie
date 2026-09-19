@@ -1,0 +1,445 @@
+/* WaiterOrders.css - Waiter Dine-In Orders Page Layout (Isolated Namespace) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* Main Outer Page Wrapper */
+.wo-order-page {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+/* Inner Container matching WaiterMenuList / CustOrder width */
+.wo-order-container {
+  background-color: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 1rem);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Order Card Wrapper Frame */
+.wo-card-wrapper {
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top White Header Section */
+.wo-white-header {
+  background-color: #ffffff;
+  padding: 1.25rem 1.25rem 1rem 1.25rem;
+}
+
+.wo-header-nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wo-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #666666;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.2s ease;
+}
+
+.wo-back-btn:hover {
+  opacity: 0.7;
+}
+
+.wo-header-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111111;
+  margin: 0;
+}
+
+/* Single-Page Dine In Tag / Badge in White Header */
+.wo-dine-in-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #241C28;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+}
+
+/* Dark Body Section */
+.wo-dark-body {
+  background: linear-gradient(165deg, #241C28 0%, #1A1320 40%, #46007A 100%);
+  color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 28px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wo-content-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.wo-left-col,
+.wo-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* Form Controls & Inputs */
+.wo-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wo-form-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #E6E1E5;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+
+.wo-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.5rem 0;
+  text-align: left;
+}
+
+.wo-dark-textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  border: none;
+  background-color: #3d363b;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  resize: none;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+}
+
+.wo-dark-pill-input {
+  width: 100%;
+  padding: 0.8rem 1.25rem;
+  border-radius: 50px;
+  border: none;
+  background-color: #3d363b;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+}
+
+.wo-dark-textarea::placeholder,
+.wo-dark-pill-input::placeholder {
+  color: #A8A0A6;
+}
+
+.wo-dark-textarea:focus,
+.wo-dark-pill-input:focus {
+  background-color: #484046;
+}
+
+/* Custom Table Dropdown Select */
+.wo-dark-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.wo-dark-pill-select {
+  width: 100%;
+  padding: 0.8rem 2.5rem 0.8rem 1.25rem;
+  border-radius: 50px;
+  border: none;
+  background-color: #3d363b;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.2s ease;
+}
+
+.wo-dark-pill-select:focus {
+  background-color: #484046;
+}
+
+.wo-dark-pill-select option {
+  background-color: #241C28;
+  color: #ffffff;
+  padding: 10px;
+}
+
+.wo-select-arrow-icon {
+  position: absolute;
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #E6E1E5;
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+.wo-details-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Bill Section */
+.wo-bill-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.wo-bill-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.4rem;
+}
+
+.wo-bill-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wo-bill-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.wo-bill-item-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #ffffff;
+  flex: 1;
+  text-align: left;
+}
+
+.wo-bill-item-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wo-qty-circle-value {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.wo-purple-price-pill {
+  background: rgba(142, 107, 175, 0.45);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.45rem 1.1rem;
+  border-radius: 50px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.wo-bill-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0.5rem 0;
+  width: 100%;
+}
+
+/* Subtotal Row */
+.wo-bill-subtotal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+}
+
+.wo-subtotal-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.wo-white-subtotal-badge {
+  background: #ffffff;
+  color: #1D1525;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.5rem 1.5rem;
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Place Order Action Button */
+.wo-place-order-wrapper {
+  margin-top: 0.5rem;
+}
+
+.wo-place-order-btn {
+  width: 100%;
+  background: #ffffff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.2rem 0.2rem 0.2rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wo-place-order-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+.wo-place-order-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.wo-place-order-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wo-place-order-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1C1524;
+  font-family: 'Inter', sans-serif;
+}
+
+.wo-black-cart-circle {
+  background: #000000;
+  color: #ffffff;
+  width: 110px;
+  height: 50px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Toast Notification Feedback */
+.wo-order-placed-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1C0338;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Responsive Layout Breakpoints */
+@media (min-width: 768px) {
+  .wo-order-container {
+    padding: 2rem;
+  }
+
+  .wo-white-header {
+    padding: 1.5rem 2rem 1rem 2rem;
+  }
+
+  .wo-dark-body {
+    padding: 2rem;
+  }
+
+  .wo-header-title {
+    font-size: 2.1rem;
+  }
+
+  .wo-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+}
+
+@media (min-width: 992px) {
+  .wo-order-container {
+    padding: 2.5rem;
+  }
+
+  .wo-content-grid {
+    gap: 3.5rem;
+  }
+
+  .wo-white-header {
+    padding: 2rem 2.5rem 1rem 2.5rem;
+  }
+
+  .wo-dark-body {
+    padding: 2.5rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .wo-order-container {
+    max-width: 1140px;
+    margin: 0 auto;
+  }
+}

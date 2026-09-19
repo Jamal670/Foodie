@@ -21,6 +21,9 @@ import WaiterOrderHistory from "./pages/Waiter/WaiterOrderHistory";
 import WaiterOrderMenu from "./pages/Waiter/WaiterOrderMenu";
 import WaiterOrderList from "./pages/Waiter/WaiterMenuList";
 import WaiterOrderDetails from "./pages/Waiter/WaiterOrderDetails";
+import WaiterCart from "./pages/Waiter/WaiterCart";
+import WaiterOrders from "./pages/Waiter/WaiterOrders";
+import WaiterEditMenuDetails from "./pages/Waiter/WaiterEditMenuDetails";
 
 import Login from "./pages/auth/login";
 import Signup from "./pages/auth/signup";
@@ -135,6 +138,22 @@ function App() {
             <Route
               path="/waiter/order-details"
               element={<WaiterOrderDetails />}
+            />
+            <Route
+              path="/waiter/cart"
+              element={<WaiterCart />}
+            />
+            <Route
+              path="/waiter/orders"
+              element={<WaiterOrders />}
+            />
+            <Route
+              path="/waiter/menu/edit/:menuItemId/:cartItemId"
+              element={<WaiterEditMenuDetails />}
+            />
+            <Route
+              path="/waiter/menu/edit/:cartItemId"
+              element={<WaiterEditMenuDetails />}
             />
 
             <Route path="/login" element={<Login />} />
