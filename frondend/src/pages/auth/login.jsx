@@ -3,34 +3,47 @@ import "../../assets/css/auth/login.css";
 import FoodieLogo from "../../components/common/FoodieLogo";
 import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
 import AuthService from "../../services/auth.services";
 import { useAlertStore } from "../../context/alertStore";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const data = await AuthService.login(email, password);
-
-      // Navigate based on onboarding status
+  // Note: For future 'currentUser' query caching, set staleTime: 15 * 60 * 1000 (15 min) on that query.
+  const loginMutation = useMutation({
+    mutationFn: (credentials) => AuthService.login(credentials.email, credentials.password),
+    onSuccess: (data) => {
+      // Navigate based on onboarding status and system role
       if (data.OnBoardingStatus === true) {
-        navigate("/");
+        const roleName = data.role?.role_name;
+        const isSystemRole = data.role?.is_system_role;
+
+        const systemRoles = ["waiter", "pos operator"];
+        if (
+          isSystemRole === true &&
+          roleName &&
+          systemRoles.includes(roleName.trim().toLowerCase())
+        ) {
+          navigate("/waiter/order-menu");
+        } else {
+          navigate("/");
+        }
       } else {
         useAlertStore.getState().showAlert("Please complete your resturant info.");
         navigate("/signup?step=3");
       }
-    } catch (err) {
+    },
+    onError: (err) => {
       useAlertStore.getState().showAlert(err.message || "Login failed.");
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    loginMutation.mutate({ email, password });
   };
 
   const handleGoogleSignIn = () => {
@@ -96,8 +109,12 @@ const Login = () => {
           </div>
 
           {/* Sign In Button */}
-          <button type="submit" className="signin-btn" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
+          <button
+            type="submit"
+            className="signin-btn"
+            disabled={loginMutation.isPending}
+          >
+            {loginMutation.isPending ? "Signing In..." : "Sign In"}
           </button>
         </form>
 

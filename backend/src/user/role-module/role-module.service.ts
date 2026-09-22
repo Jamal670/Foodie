@@ -1,15 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 
 import { Role } from './entity/role.entity';
+import { RoleStatus } from './entity/enums/role.enums';
+import { RolePermissionService } from 'src/user/role-permission/role-permission.service';
 
 @Injectable()
 export class RoleModuleService {
   constructor(
     @InjectRepository(Role)
     private readonly roleRepo: Repository<Role>,
+    private readonly rolePermissionService: RolePermissionService,
   ) {}
+
+  async validateRoleAndPermissions(roleId?: number): Promise<{
+    status: boolean;
+    role: Role | null;
+    permission: any;
+  }> {
+    if (!roleId) {
+      return {
+        status: false,
+        role: null,
+        permission: {},
+      };
+    }
+
+    const role = await this.roleRepo.findOne({
+      where: { role_id: roleId },
+    });
+
+    if (!role) {
+      return {
+        status: false,
+        role: null,
+        permission: {},
+      };
+    }
+
+    const isActive = role.status === RoleStatus.ACTIVE;
+
+    if (!isActive) {
+      return {
+        status: false,
+        role,
+        permission: {},
+      };
+    }
+
+    const permissions =
+      await this.rolePermissionService.findPermissionsForRole(roleId);
+
+    return {
+      status: true,
+      role,
+      permission: permissions,
+    };
+  }
 
   async CreateNewUserRole() {
     const role = this.roleRepo.create({
@@ -19,7 +67,50 @@ export class RoleModuleService {
     return this.roleRepo.save(role);
   }
 
-  async verifyUser(userId: number) {
-    //return this.roleRepo.update(userId);
+  async createRole(
+    data: {
+      role_name: string;
+      restaurantId: number;
+      status?: RoleStatus;
+      is_system_role?: boolean;
+    },
+    manager?: EntityManager,
+  ): Promise<Role> {
+    const repo = manager ? manager.getRepository(Role) : this.roleRepo;
+
+    const normalizedName = data.role_name.trim().toLowerCase();
+
+    // Check case-insensitive duplicate role name within the same restaurant
+    const existingRole = await repo
+      .createQueryBuilder('role')
+      .where('role.restaurantId = :restaurantId', {
+        restaurantId: data.restaurantId,
+      })
+      .andWhere('LOWER(role.role_name) = :roleName', {
+        roleName: normalizedName,
+      })
+      .getOne();
+
+    if (existingRole) {
+      throw new ConflictException(
+        'A role with this name already exists in your restaurant',
+      );
+    }
+
+    const systemRoles = ['manager', 'pos operator', 'waiter'];
+    const isSystemRole =
+      data.is_system_role !== undefined
+        ? data.is_system_role
+        : systemRoles.includes(normalizedName);
+
+    const role = repo.create({
+      role_name: data.role_name,
+      restaurantId: data.restaurantId,
+      status: data.status || RoleStatus.ACTIVE,
+      is_system_role: isSystemRole,
+    });
+
+    return await repo.save(role);
   }
 }
+

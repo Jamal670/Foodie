@@ -60,4 +60,32 @@ export class MailService {
     `,
     });
   }
+
+  //============================= Send Staff Role Verification Email =============================
+  async sendRoleVerificationEmail(email: string, token: string) {
+    const transporter = nodemailer.createTransport({
+      host: this.configService.get('MAIL_HOST'),
+      port: this.configService.get('MAIL_PORT'),
+      secure: false,
+      auth: {
+        user: this.configService.get('MAIL_USER'),
+        pass: this.configService.get('MAIL_PASS'),
+      },
+    });
+
+    const verifyLink = `${this.configService.get('FRONTEND_URL')}/role-email-verify/${token}`;
+
+    await transporter.sendMail({
+      from: '"Restaurant System" <no-reply@restaurant.com>',
+      to: email,
+      subject: 'Verify Staff Role Email',
+      html: `
+      <h2>Staff Account Verification</h2>
+      <p>Please click the link below to verify your staff email address. This link is valid for 30 minutes:</p>
+      <a href="${verifyLink}">Verify Staff Email</a>
+      <p>${verifyLink}</p>
+    `,
+    });
+  }
 }
+

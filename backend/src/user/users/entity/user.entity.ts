@@ -47,11 +47,14 @@ export class User {
   roleId?: number;
 
   @Field(() => Role, { nullable: true })
-  @ManyToOne(() => Role, { onDelete: 'CASCADE', nullable: true })
+  @ManyToOne(() => Role, (role) => role.users, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   @JoinColumn({ name: 'roleId' })
   role?: Promise<Role>;
 
-  //================== USER SESSIONS ==================
+  // ================= USER SESSIONS =================
   @Field(() => [UserSession], { nullable: true })
   @OneToMany(() => UserSession, (session) => session.user)
   sessions?: Promise<UserSession[]>;
@@ -65,8 +68,8 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ select: false })
-  password: string;
+  @Column({ type: 'varchar', nullable: true, select: false })
+  password?: string;
 
   @Field()
   @Column({ default: 'email/password' })
@@ -85,3 +88,4 @@ export class User {
   @Column({ default: false })
   OnBoardingStatus: boolean;
 }
+

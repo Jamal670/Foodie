@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 
 import { User } from '../users/entity/user.entity';
 import { UserSession } from './entity/userSession.entity';
@@ -20,6 +20,19 @@ export class UserSessionService {
 
   //============================= Generate ACCESS & REFRESH Tokens =============================
   async generateTokens(user: User) {
+    const accessTokenSecret =
+      this.configService.get<string>('WAITER_JWT_ACCESS_TOKEN') ||
+      this.configService.get<string>('JWT_ACCESS_TOKEN');
+    const refreshTokenSecret =
+      this.configService.get<string>('WAITER_JWT_REFRESH_TOKEN') ||
+      this.configService.get<string>('JWT_REFRESH_TOKEN');
+
+    if (!accessTokenSecret || !refreshTokenSecret) {
+      throw new Error(
+        'JWT access or refresh token secret configuration is missing',
+      );
+    }
+
     const payload = {
       sub: user.user_id,
       restaurantId: user.restaurantId,
@@ -28,12 +41,12 @@ export class UserSessionService {
     };
 
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get('JWT_ACCESS_TOKEN'),
+      secret: accessTokenSecret,
       expiresIn: '15m',
     });
 
     const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.get('JWT_REFRESH_TOKEN'),
+      secret: refreshTokenSecret,
       expiresIn: '3d',
     });
 
@@ -44,15 +57,29 @@ export class UserSessionService {
   }
 
   //============================= Create Session Data in DB =============================
-  async createSession(data: {
-    userId: number;
-    refreshToken: string;
-    userAgent?: string;
-    ipAddress?: string;
-  }) {
-    const hashedToken = await bcrypt.hash(data.refreshToken, 10);
+  async createSession(
+    data: {
+      userId: number;
+      refreshToken: string;
+      userAgent?: string;
+      ipAddress?: string;
+    },
+    manager?: EntityManager,
+  ) {
+    const repo = manager
+      ? manager.getRepository(UserSession)
+      : this.userSessionRepository;
 
-    return this.userSessionRepository.save({
+
+    const rawSalt =
+      this.configService.get<string | number>('WAITER_SALT_NUM') ??
+      this.configService.get<string | number>('Waiter_SALT_NUM');
+    const parsedSalt = rawSalt ? parseInt(String(rawSalt), 10) : 10;
+    const saltRounds = isNaN(parsedSalt) ? 10 : parsedSalt;
+
+    const hashedToken = await bcrypt.hash(data.refreshToken, saltRounds);
+
+    return repo.save({
       userId: data.userId,
       refreshToken: hashedToken,
       valid: true,

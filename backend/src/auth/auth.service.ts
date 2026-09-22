@@ -18,6 +18,9 @@ import { RoleModuleService } from 'src/user/role-module/role-module.service';
 import { UserSessionService } from 'src/user/user-session/user-session.service';
 import { UserStatus } from 'src/user/users/entity/enums/user.enum';
 
+import { DataSource } from 'typeorm';
+import { User } from 'src/user/users/entity/user.entity';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -27,6 +30,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly userSessionService: UserSessionService,
+    private readonly dataSource: DataSource,
   ) {}
 
   // ================== Background Email Helpers ==================
@@ -47,6 +51,161 @@ export class AuthService {
       await this.mailService.sendForgotPasswordEmail(email, token);
     } catch (err) {
       console.error('Forgot password email sending failed for:', email, err);
+    }
+  }
+
+  // ================== Generate Role Invite Token ==================
+  async generateRoleInviteToken(user: {
+    user_id: number;
+    email: string;
+  }): Promise<string> {
+    const secret =
+      this.configService.get<string>('ROLE_INVITE_JWT_SECRET') ||
+      'RoleInviteSecretKey123';
+    const expiresIn =
+      this.configService.get<string>('ROLE_INVITE_EXPIRATION') || '24h';
+
+    const payload = {
+      sub: user.user_id,
+      email: user.email,
+      purpose: 'role-invite',
+    };
+
+    return await this.jwtService.signAsync(payload, {
+      secret,
+      expiresIn: expiresIn as any,
+    });
+  }
+
+  // ================== Staff Role Email Verification ==================
+  async sendRoleVerificationEmail(userId: number, email: string) {
+    const token = await this.generateRoleInviteToken({
+      user_id: userId,
+      email,
+    });
+
+    this.sendRoleVerificationEmailInBackground(email, token);
+    return token;
+  }
+
+  private async sendRoleVerificationEmailInBackground(
+    email: string,
+    token: string,
+  ) {
+    try {
+      await this.mailService.sendRoleVerificationEmail(email, token);
+    } catch (err) {
+      console.error('Role verification email sending failed for:', email, err);
+    }
+  }
+
+  // ================== Verify Staff Role Email & Activate User ==================
+  async verifyRoleEmail(
+    token: string,
+    req: Request,
+  ): Promise<{ success: boolean; accessToken?: string; refreshToken?: string }> {
+    try {
+      const secret =
+        this.configService.get<string>('ROLE_INVITE_JWT_SECRET');
+
+      // 1. Verify token signature and expiration
+      const payload = await this.jwtService.verifyAsync(token, { secret });
+
+      // 2. Purpose and claims check
+      if (
+        !payload ||
+        payload.purpose !== 'role-invite' ||
+        !payload.sub ||
+        !payload.email
+      ) {
+        console.error(
+          '[verifyRoleEmail] Invalid token payload or purpose mismatch',
+        );
+        return { success: false };
+      }
+
+      // 3. Confirm user exists in DB and sub/email match
+      const user = await this.userService.CheckEmailExists(payload.email);
+      if (!user || user.user_id !== Number(payload.sub)) {
+        console.error('[verifyRoleEmail] User not found or ID mismatch');
+        return { success: false };
+      }
+
+      // 4. Status check: User MUST be PENDING (makes link single-use)
+      if (user.isVerified !== UserStatus.PENDING) {
+        console.error(
+          `[verifyRoleEmail] User status is '${user.isVerified}', expected PENDING`,
+        );
+        return { success: false };
+      }
+
+      let generatedTokens: {
+        accessToken: string;
+        refreshToken: string;
+      } | null = null;
+
+      // 5. Single transaction: Atomic activation + session creation
+      const transactionResult = await this.dataSource.transaction(
+        async (manager) => {
+          // Conditional atomic update
+          const updateResult = await manager
+            .getRepository(User)
+            .createQueryBuilder('user')
+            .update(User)
+            .set({ isVerified: UserStatus.VERIFIED })
+            .where('user_id = :id AND isVerified = :status', {
+              id: user.user_id,
+              status: UserStatus.PENDING,
+            })
+            .execute();
+
+          if (updateResult.affected !== 1) {
+            console.error(
+              '[verifyRoleEmail] Conditional update affected 0 rows (already activated or race condition)',
+            );
+            return false;
+          }
+
+          user.isVerified = UserStatus.VERIFIED;
+
+          // Generate session tokens
+          generatedTokens = await this.userSessionService.generateTokens(user);
+
+          const userAgent = req.headers['user-agent'];
+          const ipAddress =
+            (req.headers['x-forwarded-for'] as string) ||
+            req.socket?.remoteAddress;
+
+          // Save session using same transaction manager
+          await this.userSessionService.createSession(
+            {
+              userId: user.user_id,
+              refreshToken: generatedTokens.refreshToken,
+              userAgent: userAgent ? String(userAgent) : undefined,
+              ipAddress: ipAddress ? String(ipAddress) : undefined,
+            },
+            manager,
+          );
+
+          return true;
+        },
+      );
+
+      if (!transactionResult || !generatedTokens) {
+        return { success: false };
+      }
+
+      return {
+        success: true,
+        accessToken: (generatedTokens as any).accessToken,
+        refreshToken: (generatedTokens as any).refreshToken,
+      };
+    } catch (error) {
+      console.error(
+        '[verifyRoleEmail] Verification failed server-side:',
+        error.message,
+      );
+      return { success: false };
     }
   }
 
@@ -91,9 +250,9 @@ export class AuthService {
       }
 
       // Hash password
-      const saltRounds = Number(
-        this.configService.get<string>('PASS_SALT_NUM'),
-      );
+      const rawPassSalt = this.configService.get<string | number>('PASS_SALT_NUM');
+      const parsedPassSalt = rawPassSalt ? parseInt(String(rawPassSalt), 10) : 10;
+      const saltRounds = isNaN(parsedPassSalt) ? 10 : parsedPassSalt;
 
       dto.password = await bcrypt.hash(dto.password, saltRounds);
 
@@ -352,8 +511,14 @@ export class AuthService {
         throw new UnauthorizedException('Invalid email or password');
       }
 
-      // Check password
-      const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+      if (!user.password) {
+        throw new UnauthorizedException('Invalid email or password');
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        dto.password,
+        user.password,
+      );
       if (!isPasswordValid) {
         throw new UnauthorizedException('Invalid email or password');
       }
@@ -384,6 +549,16 @@ export class AuthService {
 
       // Already verified
       if (user.isVerified === 'verified') {
+        // 1. Fetch and validate role & permissions
+        const roleValidation =
+          await this.roleModuleService.validateRoleAndPermissions(user.roleId);
+
+        if (!roleValidation.status) {
+          throw new UnauthorizedException(
+            'Your account is temporarily blocked',
+          );
+        }
+
         // Invalidate all previous sessions
         await this.userSessionService.invalidateUserSessions(user.user_id);
 
@@ -404,12 +579,14 @@ export class AuthService {
           ipAddress: String(ipAddress),
         });
 
-        // Return tokens
+        // Return tokens with role and permission data
         return {
           message: 'Login successful',
           OnBoardingStatus: user.OnBoardingStatus,
           accessToken,
           refreshToken,
+          role: roleValidation.role,
+          permission: roleValidation.permission,
         };
       }
     } catch (error) {
@@ -508,9 +685,9 @@ export class AuthService {
       }
 
       // 5. Hash new password
-      const saltRounds = Number(
-        this.configService.get<string>('PASS_SALT_NUM'),
-      );
+      const rawResetSalt = this.configService.get<string | number>('PASS_SALT_NUM');
+      const parsedResetSalt = rawResetSalt ? parseInt(String(rawResetSalt), 10) : 10;
+      const saltRounds = isNaN(parsedResetSalt) ? 10 : parsedResetSalt;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
       // 6. Update password via user service

@@ -27,6 +27,8 @@ import { MenuItemsModule } from './menu/menu-items/menu-items/menu-items.module'
 import { TableModule } from './table-module/table/table.module';
 import { TableSectionModule } from './table-module/table-section/table-section.module';
 import { CustomerModule } from './customer/customer.module';
+import { RolePermissionModule } from './user/role-permission/role-permission.module';
+import { PermissionModule } from './user/permission/permission.module';
 
 @Module({
   imports: [
@@ -62,6 +64,8 @@ import { CustomerModule } from './customer/customer.module';
     TableModule,
     TableSectionModule,
     CustomerModule,
+    RolePermissionModule,
+    PermissionModule,
   ],
 })
 export class AppModule {}
