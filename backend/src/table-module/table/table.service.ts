@@ -11,7 +11,7 @@ import { randomUUID } from 'crypto';
 import { Table } from './entity/table.entity';
 import { CreateTableDto } from './DTO/CreateTable.dto';
 import { SuccessResponse } from 'src/common/DTOResponse/success-response.dto';
-import { QrType } from './entity/enums/enums';
+import { QrType, TableStatus } from './entity/enums/enums';
 
 @Injectable()
 export class TableService {
@@ -106,6 +106,24 @@ export class TableService {
     }
 
     return tables;
+  }
+
+  //================== Get Available Tables ==================
+  async getAvailableTables(
+    restaurantId: number,
+    branchId: number,
+  ): Promise<Table[]> {
+    return this.tableRepository.find({
+      where: {
+        restaurantId,
+        branchId,
+        status: TableStatus.AVAILABLE,
+        qrType: QrType.DINE_IN,
+      },
+      order: {
+        tableNumber: 'ASC',
+      },
+    });
   }
 
   //================== Add one more table ==================

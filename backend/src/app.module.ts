@@ -29,6 +29,7 @@ import { TableSectionModule } from './table-module/table-section/table-section.m
 import { CustomerModule } from './customer/customer.module';
 import { RolePermissionModule } from './user/role-permission/role-permission.module';
 import { PermissionModule } from './user/permission/permission.module';
+import { WaiterAndPosoperatorModule } from './waiter-and-posoperator/waiter-and-posoperator.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { PermissionModule } from './user/permission/permission.module';
     CustomerModule,
     RolePermissionModule,
     PermissionModule,
+    WaiterAndPosoperatorModule,
   ],
 })
 export class AppModule {}

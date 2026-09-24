@@ -197,7 +197,7 @@ export class MenuItemsService {
     });
   }
 
-  //-------------------------- Update Menu Item list By ID ---------------
+  //-------------------------- get Menu Item list By ID ---------------
   async getMenuItem(itemId: number, restaurantId: number): Promise<MenuItem> {
     const menuItem = await this.dataSource.getRepository(MenuItem).findOne({
       where: {
@@ -211,6 +211,23 @@ export class MenuItemsService {
     }
 
     return menuItem;
+  }
+
+  async getMenuItemDetailById(
+    itemId: number,
+    restaurantId: number,
+  ) {
+    const menuItem = await this.getMenuItem(itemId, restaurantId);
+
+    const variations = (await menuItem.variations) || [];
+    const customizations = (await menuItem.customizations) || [];
+    const addons = (await menuItem.addons) || [];
+
+    return {
+      variations,
+      customizations,
+      addons,
+    };
   }
 
   async updateMenuItem(

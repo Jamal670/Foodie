@@ -5,17 +5,31 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import AuthService from "../../services/auth.services";
-import { useAlertStore } from "../../context/alertStore";
+import { useAuth } from "../../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   // Note: For future 'currentUser' query caching, set staleTime: 15 * 60 * 1000 (15 min) on that query.
   const loginMutation = useMutation({
     mutationFn: (credentials) => AuthService.login(credentials.email, credentials.password),
     onSuccess: (data) => {
+      // Store user and permissions in localStorage and AuthContext
+      try {
+        localStorage.setItem("user", JSON.stringify(data));
+        if (data?.permission) {
+          localStorage.setItem("permissions", JSON.stringify(data.permission));
+        }
+        if (setUser) {
+          setUser(data);
+        }
+      } catch (e) {
+        console.error("Error saving login data to storage:", e);
+      }
+
       // Navigate based on onboarding status and system role
       if (data.OnBoardingStatus === true) {
         const roleName = data.role?.role_name;

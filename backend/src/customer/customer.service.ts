@@ -368,28 +368,17 @@ export class CustomerService {
     dto: ProductDetailsDto,
     restaurantId: number,
   ): Promise<ProductDetailsResponse> {
-    const menuItem = await this.menuItemsService.getMenuItem(
+    return this.menuItemsService.getMenuItemDetailById(
       dto.menuItemId,
       restaurantId,
     );
+  }
 
-    if (!menuItem) {
-      throw new NotFoundException('Menu item not found.');
-    }
-
-    if (menuItem.restaurantId !== restaurantId) {
-      throw new NotFoundException('Menu item not found.');
-    }
-
-    const variations = (await menuItem.variations) || [];
-    const customizations = (await menuItem.customizations) || [];
-    const addons = (await menuItem.addons) || [];
-
-    return {
-      variations,
-      customizations,
-      addons,
-    };
+  // ==================== findCustomerById ====================
+  async findCustomerById(id: number): Promise<Customer | null> {
+    return this.customerRepository.findOne({
+      where: { id },
+    });
   }
 }
 

@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, EntityManager } from 'typeorm';
 import { OrderItemsCustomization } from './entity/orderItemsCustomization.entity';
-
-import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class OrderItemsCustomizationService {
@@ -26,5 +24,22 @@ export class OrderItemsCustomizationService {
       price,
     });
     return entityManager.save(OrderItemsCustomization, entity);
+  }
+
+  async findByOrderItemId(
+    orderItemId: number,
+  ): Promise<OrderItemsCustomization[]> {
+    return await this.repository.find({
+      where: { orderItemId },
+    });
+  }
+
+  async findByOrderItemIds(
+    orderItemIds: number[],
+  ): Promise<OrderItemsCustomization[]> {
+    if (!orderItemIds || orderItemIds.length === 0) return [];
+    return await this.repository.find({
+      where: { orderItemId: In(orderItemIds) },
+    });
   }
 }

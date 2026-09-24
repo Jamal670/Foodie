@@ -31,4 +31,18 @@ export class OrderItemsService {
     });
     return entityManager.save(OrderItems, item);
   }
+
+  async findOrderItemsByOrderId(
+    orderId: number,
+    branchId: number,
+  ): Promise<OrderItems[]> {
+    return await this.orderItemsRepository
+      .createQueryBuilder('orderItem')
+      .innerJoin('orderItem.order', 'order')
+      .leftJoinAndSelect('orderItem.variations', 'variations')
+      .leftJoinAndSelect('orderItem.customizations', 'customizations')
+      .where('orderItem.orderId = :orderId', { orderId })
+      .andWhere('order.branchId = :branchId', { branchId })
+      .getMany();
+  }
 }

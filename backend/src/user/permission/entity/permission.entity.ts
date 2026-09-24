@@ -20,6 +20,10 @@ export class Permission {
   @Column({ unique: true })
   permissionKey: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  permissionCode: string;
+
   // ================= GROUP =================
   @Field()
   @Column()

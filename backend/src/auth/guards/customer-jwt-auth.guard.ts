@@ -50,7 +50,7 @@ export class CustomerJwtAuthGuard implements CanActivate {
     } catch (err) {
       if (err instanceof UnauthorizedException) {
         throw new UnauthorizedException(
-          'Dining session has expired. Please rescan the QR code to continue.',
+          'Your dining session has expired. Please scan the QR code again.',
         );
       }
       throw err;

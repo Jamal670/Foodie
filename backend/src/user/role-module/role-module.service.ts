@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 
@@ -57,6 +57,56 @@ export class RoleModuleService {
       role,
       permission: permissions,
     };
+  }
+
+  async verifyPermission(
+    roleId: number,
+    restaurantId: number,
+    permissionKey: string,
+    permissionCode: string,
+  ): Promise<boolean> {
+    if (!roleId || !restaurantId || !permissionKey || !permissionCode) {
+      return false;
+    }
+
+    const role = await this.roleRepo.findOne({
+      where: {
+        role_id: roleId,
+        restaurantId: restaurantId,
+      },
+    });
+
+    if (!role) {
+      return false;
+    }
+
+    if (role.status === RoleStatus.INACTIVE) {
+      throw new UnauthorizedException('Your Account has temporarily Blocked');
+    }
+
+    if (role.status !== RoleStatus.ACTIVE) {
+      return false;
+    }
+
+    const rolePermissions =
+      await this.rolePermissionService.findPermissionsForRole(roleId);
+
+    if (!rolePermissions || rolePermissions.length === 0) {
+      return false;
+    }
+
+    for (const rp of rolePermissions) {
+      const perm = await rp.permission;
+      if (
+        perm &&
+        perm.permissionKey === permissionKey &&
+        perm.permissionCode === permissionCode
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   async CreateNewUserRole() {

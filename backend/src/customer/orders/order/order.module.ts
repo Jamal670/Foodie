@@ -17,6 +17,9 @@ import { ItemCustomizationModule } from 'src/menu/menu-items/item-customization/
 import { OrderItemsModule } from '../order-items/order-items.module';
 import { OrderItemsVariationModule } from '../order-items-variation/order-items-variation.module';
 import { OrderItemsCustomizationModule } from '../order-items-customization/order-items-customization.module';
+import { Table } from 'src/table-module/table/entity/table.entity';
+import { Customer } from 'src/customer/entity/customer.entity';
+import { TableSectionModule } from 'src/table-module/table-section/table-section.module';
 import { CustomerModule } from '../../customer.module';
 
 @Module({
@@ -28,6 +31,8 @@ import { CustomerModule } from '../../customer.module';
       OrderItemsCustomization,
       CustCart,
       Branch,
+      Table,
+      Customer,
     ]),
     BranchModule,
     CartModule,
@@ -37,6 +42,7 @@ import { CustomerModule } from '../../customer.module';
     OrderItemsModule,
     OrderItemsVariationModule,
     OrderItemsCustomizationModule,
+    TableSectionModule,
     forwardRef(() => CustomerModule),
   ],
   providers: [OrderResolver, OrderService],
