@@ -1,62 +1,46 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../assets/css/Waiter/WaiterCart.css";
 import { FaTimes, FaCheck, FaArrowRight } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
-
-/**
- * TEMPORARY / PLACEHOLDER MOCK CART DATA (Section B)
- * Shaped exactly like customer/waiter cart items for seamless future backend integration.
- * Fields: id, menuItemId, image, menuItemName, itemVariationName, itemCustomizationName, quantity, price
- */
-const INITIAL_MOCK_CART_ITEMS = [
-  {
-    id: 1,
-    menuItemId: 101,
-    image: "/images/scrambled_eggs.jpg",
-    menuItemName: "Scrambled Eggs Special",
-    itemVariationName: "Double Egg",
-    itemCustomizationName: "Extra Cheese, Low Salt",
-    quantity: 2,
-    price: 950,
-  },
-  {
-    id: 2,
-    menuItemId: 102,
-    image: "/images/scrambled_eggs.jpg",
-    menuItemName: "Club Sandwich with Fries",
-    itemVariationName: "Chicken",
-    itemCustomizationName: "No Mayonnaise",
-    quantity: 1,
-    price: 1200,
-  },
-  {
-    id: 3,
-    menuItemId: 103,
-    image: "/images/scrambled_eggs.jpg",
-    menuItemName: "Fresh Mango Smoothie",
-    itemVariationName: "Large (500ml)",
-    itemCustomizationName: "Less Ice",
-    quantity: 2,
-    price: 800,
-  },
-];
+import {
+  getWaiterCartItems,
+  removeWaiterCartItem,
+  WAITER_CART_EVENT,
+} from "../../utils/waiterCartData";
 
 const WaiterCart = () => {
   const navigate = useNavigate();
 
-  // Local state for cart items (Section B - UI & Mock Data only)
-  const [cartItems, setCartItems] = useState(INITIAL_MOCK_CART_ITEMS);
+  // Local state initialized directly from localStorage helper waiterCartData.js
+  const [cartItems, setCartItems] = useState(() => getWaiterCartItems());
   const [paymentMethod, setPaymentMethod] = useState("Card"); // "Card" | "Cash"
 
-  // Section C Decision: Interactive local state removal (item visually removed from array on click, no API mutation)
+  // Listen to waiterCartData updates in localStorage
+  useEffect(() => {
+    const syncCart = () => {
+      setCartItems(getWaiterCartItems());
+    };
+
+    window.addEventListener(WAITER_CART_EVENT, syncCart);
+    window.addEventListener("storage", syncCart);
+
+    return () => {
+      window.removeEventListener(WAITER_CART_EVENT, syncCart);
+      window.removeEventListener("storage", syncCart);
+    };
+  }, []);
+
   const handleRemoveItem = (id) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    const updated = removeWaiterCartItem(id);
+    setCartItems(updated);
   };
 
   const handleEditCartItem = (item) => {
     const queryParams = new URLSearchParams();
     if (item.quantity) queryParams.set("quantity", item.quantity.toString());
+    if (item.variationId) queryParams.set("variationId", item.variationId.toString());
+    if (item.customizationId) queryParams.set("customizationId", item.customizationId.toString());
     if (item.itemVariationName) queryParams.set("variationName", encodeURIComponent(item.itemVariationName));
     if (item.itemCustomizationName) queryParams.set("customizationName", encodeURIComponent(item.itemCustomizationName));
 
@@ -68,16 +52,14 @@ const WaiterCart = () => {
 
   const handlePlaceOrder = () => {
     if (cartItems.length === 0) return;
-    // Section A adaptation: Navigate to Waiter Order Menu (POS flow) on placing order
-    navigate("/waiter/orders");
+    navigate("/waiter/orders", { state: { paymentMethod } });
   };
 
-  // Section A adaptation: Navigates waiter back to Waiter Order Menu POS tab instead of customer qrToken route
   const handleBrowseProducts = () => {
     navigate("/waiter/order-menu");
   };
 
-  // Total Calculations (Price represents line total)
+  // Total Calculations (Price represents line item total or price)
   const itemsTotal = cartItems.reduce(
     (sum, item) => sum + Number(item.price || 0),
     0

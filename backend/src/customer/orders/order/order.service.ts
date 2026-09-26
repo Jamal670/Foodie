@@ -247,122 +247,75 @@ export class OrderService {
    * 5. Executes a single atomic transaction: locks and deactivates cart, generates race-safe branch order number,
    *    persists order, order items, variations, customizations, and updates customer details.
    */
-  async createOrder(
-    dto: CreateOrdersDto,
-    session: TableSession,
-    customer: Customer,
+  /**
+   * Helper to insert or update line items for an order and recalculate totals transactionally.
+   */
+  private async processOrderItemsAndTotalsTransactional(
+    entityManager: EntityManager,
+    targetOrder: Orders,
+    validatedLineItems: ValidatedLineItem[],
+    taxRate: number,
   ): Promise<Orders> {
-    if (!session || !session.id || !session.branchId || !session.restaurantId) {
-      throw new BadRequestException(
-        'Invalid or expired dining session context.',
-      );
-    }
+    const orderItemsRepo = entityManager.getRepository(OrderItems);
 
-    if (!customer || !customer.id) {
-      throw new BadRequestException('Invalid or expired customer context.');
-    }
+    const existingItems = await orderItemsRepo.find({
+      where: { orderId: targetOrder.id },
+      relations: ['variations', 'customizations'],
+    });
 
-    // Step 1: Concurrent pre-transaction retrieval (Active Cart + Branch Details)
-    const [cart, branch] = await Promise.all([
-      this.cartService.findCart(session.id),
-      this.branchService.findBranchById(session.branchId),
-    ]);
+    for (const line of validatedLineItems) {
+      const lineVarId = line.variationSnapshot?.variationId;
+      const lineVarName = line.variationSnapshot?.name?.trim()?.toLowerCase();
+      const lineCustId = line.customizationSnapshot?.customizationId;
+      const lineCustName = line.customizationSnapshot?.name?.trim()?.toLowerCase();
 
-    if (!cart) {
-      throw new BadRequestException('No active cart found for your session.');
-    }
+      let matchedItem: OrderItems | undefined = undefined;
 
-    const cartItems = (await cart.items) || [];
-    if (cartItems.length === 0) {
-      throw new BadRequestException('Your cart is empty.');
-    }
+      for (const eItem of existingItems) {
+        if (eItem.menuItemId !== line.menuItemId) continue;
 
-    if (!branch) {
-      throw new NotFoundException('Branch not found.');
-    }
+        const eItemVars = eItem.variations ? await eItem.variations : [];
+        let varMatches = false;
+        if (!lineVarId && !lineVarName) {
+          varMatches = !eItemVars || eItemVars.length === 0;
+        } else {
+          varMatches = (eItemVars || []).some((v) => {
+            if (lineVarId && v.itemVariationId === lineVarId) return true;
+            if (lineVarName && v.name?.trim()?.toLowerCase() === lineVarName) return true;
+            return false;
+          });
+        }
+        if (!varMatches) continue;
 
-    const taxRate =
-      dto.paymentMethod === PaymentMethod.CARD
-        ? Number(branch.taxCard || 0)
-        : Number(branch.taxCash || 0);
+        const eItemCusts = eItem.customizations ? await eItem.customizations : [];
+        let custMatches = false;
+        if (!lineCustId && !lineCustName) {
+          custMatches = !eItemCusts || eItemCusts.length === 0;
+        } else {
+          custMatches = (eItemCusts || []).some((c) => {
+            if (lineCustId && c.itemCustomizationId === lineCustId) return true;
+            if (lineCustName && c.name?.trim()?.toLowerCase() === lineCustName) return true;
+            return false;
+          });
+        }
 
-    // Step 2: Shared menu validation
-    const validatedLineItems = await this.validateLineItems(
-      cartItems
-        .filter((item): item is typeof item & { menuItemId: number } => item.menuItemId !== undefined && item.menuItemId !== null)
-        .map((item) => ({
-          menuItemId: item.menuItemId,
-          quantity: item.quantity,
-          variationId: item.variationId,
-          itemVariationName: item.itemVariationName,
-          customizationId: item.customizationId,
-          itemCustomizationName: item.itemCustomizationName,
-        })),
-      session.restaurantId,
-    );
-
-    // Step 3: Financial Calculations
-    const subtotal = Number(
-      validatedLineItems.reduce((sum, i) => sum + i.lineTotal, 0).toFixed(2),
-    );
-    const tax = Number(((subtotal * taxRate) / 100).toFixed(2));
-    const total = Number((subtotal + tax).toFixed(2));
-
-    // Step 4: Single Atomic Database Transaction
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const entityManager = queryRunner.manager;
-
-      // Section A: Lock cart row and claim/deactivate cart
-      const activeCart = await entityManager.getRepository(CustCart).findOne({
-        where: { id: cart.id, isActive: true },
-        lock: { mode: 'pessimistic_write' },
-      });
-
-      if (!activeCart) {
-        throw new BadRequestException(
-          'Cart was already submitted or is no longer active.',
-        );
+        if (custMatches) {
+          matchedItem = eItem;
+          break;
+        }
       }
 
-      activeCart.isActive = false;
-      await entityManager.save(CustCart, activeCart);
-
-      // Section C: Race-safe branch order sequence generation
-      const orderNumber = await this.generateOrderNumberTransactional(
-        entityManager,
-        session.branchId,
-        branch.branchNo,
-      );
-
-      // Persist Order
-      const newOrder = entityManager.create(Orders, {
-        orderNumber,
-        branchId: session.branchId,
-        tableId: session.tableId,
-        tableSessionId: session.id,
-        customerId: customer.id,
-        orderType: dto.orderType || OrderType.DINE_IN,
-        paymentMethod: dto.paymentMethod,
-        status: OrderStatus.PENDING,
-        subtotal,
-        tax,
-        total,
-      });
-
-      const savedOrder = await entityManager.save(Orders, newOrder);
-
-      // Persist Order Items, Variations, Customizations using dedicated services
-      const savedItemsList: OrderItems[] = [];
-
-      for (const line of validatedLineItems) {
+      if (matchedItem) {
+        matchedItem.quantity += line.quantity;
+        matchedItem.totalPrice = Number(
+          (matchedItem.quantity * Number(matchedItem.unitPrice)).toFixed(2),
+        );
+        await orderItemsRepo.save(matchedItem);
+      } else {
         const savedOrderItem =
           await this.orderItemsService.createOrderItemTransactional(
             entityManager,
-            savedOrder.id,
+            targetOrder.id,
             line.menuItemId,
             line.menuItemName,
             line.quantity,
@@ -398,12 +351,166 @@ export class OrderService {
           savedOrderItem.customizations = Promise.resolve([]);
         }
 
-        savedItemsList.push(savedOrderItem);
+        existingItems.push(savedOrderItem);
+      }
+    }
+
+    const allItems = await orderItemsRepo.find({
+      where: { orderId: targetOrder.id },
+      relations: ['variations', 'customizations'],
+    });
+
+    const subtotal = Number(
+      allItems.reduce((sum, item) => sum + Number(item.totalPrice), 0).toFixed(2),
+    );
+    const tax = Number(((subtotal * taxRate) / 100).toFixed(2));
+    const total = Number((subtotal + tax).toFixed(2));
+
+    targetOrder.subtotal = subtotal;
+    targetOrder.tax = tax;
+    targetOrder.total = total;
+
+    const savedOrder = await entityManager.getRepository(Orders).save(targetOrder);
+    savedOrder.items = Promise.resolve(allItems);
+
+    return savedOrder;
+  }
+
+  /**
+   * Orchestrates the complete order creation flow:
+   * 1. Validates dining session and customer context.
+   * 2. Retrieves cart and branch details.
+   * 3. Validates menu items, variations, customizations against live DB data.
+   * 4. Calculates subtotal, tax rate, and total amount.
+   * 5. Executes a single atomic transaction: deactivates cart, reuses existing order for active session
+   *    or creates a new order, persists/updates order items, variations, customizations, and updates customer details.
+   */
+  async createOrder(
+    dto: CreateOrdersDto,
+    session: TableSession,
+    customer: Customer,
+  ): Promise<Orders> {
+    if (!session || !session.id || !session.branchId || !session.restaurantId) {
+      throw new BadRequestException(
+        'Invalid or expired dining session context.',
+      );
+    }
+
+    if (!customer || !customer.id) {
+      throw new BadRequestException('Invalid or expired customer context.');
+    }
+
+    // Step 1: Pre-transaction retrieval (Cart + Branch Details)
+    const [cart, branch] = await Promise.all([
+      this.cartRepository.findOne({
+        where: { sessionId: session.id },
+        order: { id: 'DESC' },
+        relations: ['items'],
+      }),
+      this.branchService.findBranchById(session.branchId),
+    ]);
+
+    if (!cart) {
+      throw new BadRequestException('No cart found for your session.');
+    }
+
+    const cartItems = (await cart.items) || [];
+    if (cartItems.length === 0) {
+      throw new BadRequestException('Your cart is empty.');
+    }
+
+    if (!branch) {
+      throw new NotFoundException('Branch not found.');
+    }
+
+    const taxRate =
+      dto.paymentMethod === PaymentMethod.CARD
+        ? Number(branch.taxCard || 0)
+        : Number(branch.taxCash || 0);
+
+    // Step 2: Shared menu validation
+    const validatedLineItems = await this.validateLineItems(
+      cartItems
+        .filter((item): item is typeof item & { menuItemId: number } => item.menuItemId !== undefined && item.menuItemId !== null)
+        .map((item) => ({
+          menuItemId: item.menuItemId,
+          quantity: item.quantity,
+          variationId: item.variationId,
+          itemVariationName: item.itemVariationName,
+          customizationId: item.customizationId,
+          itemCustomizationName: item.itemCustomizationName,
+        })),
+      session.restaurantId,
+    );
+
+    // Step 3: Single Atomic Database Transaction
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const entityManager = queryRunner.manager;
+
+      // Section A: Deactivate cart if active (do not fail if cart is already inactive)
+      const cartRepo = entityManager.getRepository(CustCart);
+      const activeCart = await cartRepo.findOne({
+        where: { id: cart.id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (activeCart && activeCart.isActive) {
+        activeCart.isActive = false;
+        await cartRepo.save(activeCart);
       }
 
-      savedOrder.items = Promise.resolve(savedItemsList);
+      // Section B: Reuse existing non-cancelled Order for this session or create a new order
+      const ordersRepo = entityManager.getRepository(Orders);
+      let targetOrder = await ordersRepo.findOne({
+        where: { tableSessionId: session.id },
+        order: { id: 'DESC' },
+        lock: { mode: 'pessimistic_write' },
+      });
 
-      // Section 16: Customer Info Update
+      if (targetOrder && targetOrder.status === OrderStatus.CANCELLED) {
+        targetOrder = null;
+      }
+
+      if (!targetOrder) {
+        const orderNumber = await this.generateOrderNumberTransactional(
+          entityManager,
+          session.branchId,
+          branch.branchNo,
+        );
+
+        const newOrder = ordersRepo.create({
+          orderNumber,
+          branchId: session.branchId,
+          tableId: session.tableId,
+          tableSessionId: session.id,
+          customerId: customer.id,
+          orderType: dto.orderType || OrderType.DINE_IN,
+          paymentMethod: dto.paymentMethod,
+          status: OrderStatus.PENDING,
+          subtotal: 0,
+          tax: 0,
+          total: 0,
+        });
+
+        targetOrder = await ordersRepo.save(newOrder);
+      } else {
+        if (dto.paymentMethod) targetOrder.paymentMethod = dto.paymentMethod;
+        if (dto.orderType) targetOrder.orderType = dto.orderType;
+      }
+
+      // Section C: Process items, variations, customizations, and recalculate totals
+      const savedOrder = await this.processOrderItemsAndTotalsTransactional(
+        entityManager,
+        targetOrder,
+        validatedLineItems,
+        taxRate,
+      );
+
+      // Section D: Customer Info Update
       if (dto.name || dto.phoneNo || dto.email) {
         const updatePayload: Partial<Customer> = {};
         if (dto.name) updatePayload.name = dto.name.trim();
@@ -432,8 +539,8 @@ export class OrderService {
    * 5. Single atomic transaction:
    *    - Finds/creates active TableSession and transitions table to OCCUPIED.
    *    - Resolves/creates Customer record.
-   *    - Generates race-safe branch order number.
-   *    - Persists order, order items, variations, customizations.
+   *    - Reuses existing order for session or generates new race-safe order number.
+   *    - Persists/updates order items, variations, customizations, and recalculates totals.
    */
   async createOrderByPosOperator(
     dto: CreatePosOrderDto,
@@ -478,14 +585,7 @@ export class OrderService {
       user.restaurantId,
     );
 
-    // Step 4: Financial Calculations
-    const subtotal = Number(
-      validatedLineItems.reduce((sum, i) => sum + i.lineTotal, 0).toFixed(2),
-    );
-    const tax = Number(((subtotal * taxRate) / 100).toFixed(2));
-    const total = Number((subtotal + tax).toFixed(2));
-
-    // Step 5: Single Atomic Transaction
+    // Step 4: Single Atomic Transaction
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -565,77 +665,51 @@ export class OrderService {
         customer = await customerRepo.save(customer);
       }
 
-      // Section D: Race-safe order number generation
-      const orderNumber = await this.generateOrderNumberTransactional(
-        entityManager,
-        user.branchId,
-        branch.branchNo,
-      );
-
-      // Persist Order
-      const newOrder = entityManager.create(Orders, {
-        orderNumber,
-        branchId: user.branchId,
-        tableId: table.id,
-        tableSessionId: session.id,
-        customerId: customer.id,
-        orderType: dto.orderType || OrderType.DINE_IN,
-        paymentMethod,
-        status: OrderStatus.PENDING,
-        subtotal,
-        tax,
-        total,
+      // Section D: Reuse existing order or generate new race-safe order number
+      const ordersRepo = entityManager.getRepository(Orders);
+      let targetOrder = await ordersRepo.findOne({
+        where: { tableSessionId: session.id },
+        order: { id: 'DESC' },
+        lock: { mode: 'pessimistic_write' },
       });
 
-      const savedOrder = await entityManager.save(Orders, newOrder);
-
-      // Persist Order Items, Variations, Customizations
-      const savedItemsList: OrderItems[] = [];
-
-      for (const line of validatedLineItems) {
-        const savedOrderItem =
-          await this.orderItemsService.createOrderItemTransactional(
-            entityManager,
-            savedOrder.id,
-            line.menuItemId,
-            line.menuItemName,
-            line.quantity,
-            line.unitPrice,
-            line.lineTotal,
-          );
-
-        if (line.variationSnapshot) {
-          const savedVar =
-            await this.orderItemsVariationService.createOrderItemVariationTransactional(
-              entityManager,
-              savedOrderItem.id,
-              line.variationSnapshot.variationId,
-              line.variationSnapshot.name,
-              line.variationSnapshot.price,
-            );
-          savedOrderItem.variations = Promise.resolve([savedVar]);
-        } else {
-          savedOrderItem.variations = Promise.resolve([]);
-        }
-
-        if (line.customizationSnapshot) {
-          const savedCust =
-            await this.orderItemsCustomizationService.createOrderItemCustomizationTransactional(
-              entityManager,
-              savedOrderItem.id,
-              line.customizationSnapshot.customizationId,
-              line.customizationSnapshot.name,
-              line.customizationSnapshot.price,
-            );
-          savedOrderItem.customizations = Promise.resolve([savedCust]);
-        } else {
-          savedOrderItem.customizations = Promise.resolve([]);
-        }
-
-        savedItemsList.push(savedOrderItem);
+      if (targetOrder && targetOrder.status === OrderStatus.CANCELLED) {
+        targetOrder = null;
       }
 
-      savedOrder.items = Promise.resolve(savedItemsList);
+      if (!targetOrder) {
+        const orderNumber = await this.generateOrderNumberTransactional(
+          entityManager,
+          user.branchId,
+          branch.branchNo,
+        );
+
+        const newOrder = ordersRepo.create({
+          orderNumber,
+          branchId: user.branchId,
+          tableId: table.id,
+          tableSessionId: session.id,
+          customerId: customer.id,
+          orderType: dto.orderType || OrderType.DINE_IN,
+          paymentMethod,
+          status: OrderStatus.PENDING,
+          subtotal: 0,
+          tax: 0,
+          total: 0,
+        });
+
+        targetOrder = await ordersRepo.save(newOrder);
+      } else {
+        if (paymentMethod) targetOrder.paymentMethod = paymentMethod;
+        if (dto.orderType) targetOrder.orderType = dto.orderType;
+      }
+
+      const savedOrder = await this.processOrderItemsAndTotalsTransactional(
+        entityManager,
+        targetOrder,
+        validatedLineItems,
+        taxRate,
+      );
 
       await queryRunner.commitTransaction();
       return savedOrder;

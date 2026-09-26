@@ -354,7 +354,9 @@ const WaiterProductDetailView = ({
                       }`}
                       onClick={() => setSelectedVariationId(v.id)}
                     >
-                      <span className="wod-variation-name">{v.name}</span>
+                      <span className="wod-variation-name">
+                        {v.name || `Option ${v.id}`}
+                      </span>
                       <span className="wod-variation-price-text">
                         {v.price}
                       </span>
@@ -473,12 +475,26 @@ const WaiterProductDetailView = ({
                       const priceToDisplay = parsePrice(
                         addonItem.discountedPrice || addonItem.basePrice || addonItem.price
                       );
-                      const isAdded = selectedAddonIds.includes(addon.id);
                       const addonImg =
                         addonItem.images?.[0]?.imageUrl || addonItem.image || breakfastImg;
+                      const targetId = addonItem.id || addon.addonId;
+
+                      const handleNavigateAddonDetail = (e) => {
+                        if (e) e.stopPropagation();
+                        if (targetId) {
+                          navigate(`/waiter/order-details/${targetId}`, {
+                            state: { item: addonItem, menuItemId: targetId },
+                          });
+                        }
+                      };
 
                       return (
-                        <div key={addon.id} className="wod-addon-card">
+                        <div
+                          key={addon.id}
+                          className="wod-addon-card"
+                          onClick={handleNavigateAddonDetail}
+                          style={{ cursor: "pointer" }}
+                        >
                           <div className="wod-addon-price-badge">
                             PKR {priceToDisplay}
                           </div>
@@ -496,16 +512,11 @@ const WaiterProductDetailView = ({
                               {addonItem.name}
                             </span>
                             <button
-                              className={`wod-addon-plus-btn ${
-                                isAdded ? "added" : ""
-                              }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleAddonToggle(addon.id);
-                              }}
-                              aria-label={`Toggle addon ${addonItem.name}`}
+                              className="wod-addon-plus-btn"
+                              onClick={handleNavigateAddonDetail}
+                              aria-label={`View addon ${addonItem.name}`}
                             >
-                              {isAdded ? <FaMinus /> : <FaPlus />}
+                              <FaPlus />
                             </button>
                           </div>
                         </div>

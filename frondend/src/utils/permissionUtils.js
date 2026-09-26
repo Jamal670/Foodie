@@ -8,6 +8,8 @@ export const PERMISSION_CODES = {
   ORDERS_VIEW_DETAILS: "924063708430338",
   ORDERS_EDIT: "92406370334",
   POS_TAB: "9240767",
+  POS_VIEW: "92407670843",
+  POS_CREATE_ORDER: "924076702730673",
 };
 
 export const PERMISSION_KEYS = {
@@ -16,6 +18,8 @@ export const PERMISSION_KEYS = {
   ORDERS_VIEW_DETAILS: "waiter.Orders.view.details",
   ORDERS_EDIT: "waiter.Orders.edit",
   POS_TAB: "waiter.POS",
+  POS_VIEW: "waiter.POS.view",
+  POS_CREATE_ORDER: "waiter.POS.create.order",
 };
 
 /**

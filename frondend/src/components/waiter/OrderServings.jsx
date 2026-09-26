@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { GoDotFill } from "react-icons/go";
 import "../../assets/css/Waiter/WaiterOrderHistory.css";
 import breakfastImg from "/images/breakfast.png";
 import {
@@ -232,9 +233,9 @@ const OrderServings = () => {
           : "N/A";
         const orderTime = order.createdAt
           ? new Date(order.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
+            hour: "2-digit",
+            minute: "2-digit",
+          })
           : "N/A";
 
         return (
@@ -255,12 +256,20 @@ const OrderServings = () => {
                     className="woh-order-id"
                     onClick={() => toggleOrder(order.id)}
                   >
-                    Order # {order.orderNumber || order.id}
+                    # {order.orderNumber || order.id}
                     {isExpanded ? (
                       <FaChevronUp className="woh-chevron" />
                     ) : (
                       <FaChevronDown className="woh-chevron" />
                     )}
+                    <span
+                      className={`woh-status-badge ${(order.status || "PENDING").toLowerCase()
+                        }`}
+                    >
+                      <GoDotFill />
+                      {order.status || "PENDING"}
+                    </span>
+
                   </div>
 
                   <button
@@ -269,7 +278,7 @@ const OrderServings = () => {
                     onClick={(e) => handleConfirmOrder(order.id, e)}
                   >
                     {updateStatusMutation.isPending &&
-                    updateStatusMutation.variables === order.id
+                      updateStatusMutation.variables === order.id
                       ? "Updating..."
                       : "Done"}
                   </button>
@@ -283,9 +292,6 @@ const OrderServings = () => {
                   <div className="woh-order-info-left">
                     <span className="woh-order-type-badge">
                       {order.orderType || "DINE_IN"}
-                    </span>
-                    <span className="woh-order-type-badge" style={{ backgroundColor: "#eef2ff", color: "#4f46e5" }}>
-                      {order.status || "PENDING"}
                     </span>
                     {order.orderType === "DINE_IN" || !order.orderType ? (
                       <span className="woh-table-badge">
@@ -357,7 +363,7 @@ const OrderServings = () => {
                     {/* Total Summary */}
                     <div className="woh-total-summary">
                       <div className="woh-total-label">
-                        <span className="woh-total-label-text">Total</span>
+                        <span className="woh-total-label-text">Total <span style={{ fontSize: "10px", color: "grey" }}>(+TAX)</span></span>
                       </div>
                       <div className="woh-total-amount">
                         RS. {order.total ? Number(order.total).toFixed(1) : "0.0"}
@@ -369,6 +375,10 @@ const OrderServings = () => {
                       <span className="woh-info-badge">
                         <span className="woh-info-label">Name:</span>{" "}
                         {customerName}
+                      </span>
+                      <span className="woh-info-badge">
+                        <span className="woh-info-label">Payment:</span>{" "}
+                        {order.paymentMethod}
                       </span>
                       <span className="woh-info-badge">
                         <span className="woh-info-label">Date:</span>{" "}
@@ -390,16 +400,18 @@ const OrderServings = () => {
                       >
                         Add Items
                       </button>
-                      <button
-                        className="woh-action-btn woh-btn-confirmed"
-                        disabled={updateStatusMutation.isPending}
-                        onClick={() => handleConfirmOrder(order.id)}
-                      >
+                      {order.status === "CONFIRMED" || order.status === "PENDING" && (
+                        <button
+                          className="woh-action-btn woh-btn-confirmed"
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() => handleConfirmOrder(order.id)}
+                        >
                         {updateStatusMutation.isPending &&
-                        updateStatusMutation.variables === order.id
+                          updateStatusMutation.variables === order.id
                           ? "Updating..."
                           : "Confirmed"}
                       </button>
+                      )}
                     </div>
                   </>
                 )}

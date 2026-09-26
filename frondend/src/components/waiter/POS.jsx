@@ -1,65 +1,92 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
+import { Spinner } from "react-bootstrap";
 import "../../assets/css/Waiter/WaiterOrderMenu.css";
 import breakfastImg from "/images/breakfast.png";
-
-// Sample POS items data - matching visual reference image layout
-const samplePOSItems = [
-  {
-    id: 8976,
-    title: "Breakfast",
-    pendingAmount: 3088,
-    image: breakfastImg,
-  },
-  {
-    id: 8946,
-    title: "Coffees",
-    pendingAmount: 2152,
-    image: breakfastImg,
-  },
-  {
-    id: 8376,
-    title: "Burgers",
-    pendingAmount: 1890,
-    image: breakfastImg,
-    active: true, // Selected card highlight matching image
-  },
-  {
-    id: 8210,
-    title: "Desserts",
-    pendingAmount: 2450,
-    image: breakfastImg,
-  },
-  {
-    id: 8195,
-    title: "Pastas",
-    pendingAmount: 1750,
-    image: breakfastImg,
-  },
-  {
-    id: 8042,
-    title: "Beverages",
-    pendingAmount: 1200,
-    image: breakfastImg,
-  },
-];
+import { useWaiterPOSMenu } from "../../hooks/useWaiterPOS";
 
 const POS = () => {
   const navigate = useNavigate();
-  const [selectedId, setSelectedId] = useState(8376);
+  const [selectedId, setSelectedId] = useState(null);
 
-  const handleCardClick = (item) => {
-    setSelectedId(item.id);
+  const {
+    categories = [],
+    isLoading,
+    isError,
+    error,
+    hasPosViewPermission,
+  } = useWaiterPOSMenu();
+
+  // Filter top level categories (level === 1 or parentCategoryId === null/undefined)
+  const topCategories = categories.filter(
+    (c) => c.level === 1 || !c.parentCategoryId
+  );
+  const displayCategories =
+    topCategories.length > 0 ? topCategories : categories;
+
+  const handleCardClick = (cat) => {
+    setSelectedId(cat.id);
     navigate("/waiter/order-list", {
-      state: { selectedCategory: item.title, categoryId: item.id },
+      state: { selectedCategory: cat.name, categoryId: cat.id, category: cat },
     });
   };
 
+  // Permission error or query failure
+  if (!hasPosViewPermission || isError) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "350px",
+          width: "100%",
+        }}
+      >
+        <h2 style={{ color: "#666", fontWeight: "700", fontSize: "1.8rem" }}>
+          NO Found
+        </h2>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "300px", width: "100%" }}
+      >
+        <Spinner animation="border" variant="primary" role="status">
+          <span className="visually-hidden">Loading POS categories...</span>
+        </Spinner>
+      </div>
+    );
+  }
+
+  if (!displayCategories || displayCategories.length === 0) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "350px",
+          width: "100%",
+        }}
+      >
+        <h2 style={{ color: "#666", fontWeight: "700", fontSize: "1.8rem" }}>
+          NO Found
+        </h2>
+      </div>
+    );
+  }
+
   return (
     <div className="pos-ref-grid">
-      {samplePOSItems.map((item) => {
+      {displayCategories.map((item) => {
         const isSelected = selectedId === item.id;
+        const imageUrl = item.imageUrl || breakfastImg;
 
         return (
           <div
@@ -68,8 +95,8 @@ const POS = () => {
             onClick={() => handleCardClick(item)}
           >
             <img
-              src={item.image || breakfastImg}
-              alt={item.title}
+              src={imageUrl}
+              alt={item.name}
               className="pos-ref-image"
               onError={(e) => {
                 e.target.onerror = null;
@@ -78,11 +105,11 @@ const POS = () => {
             />
             <div className="pos-ref-overlay">
               <div className="pos-ref-title-group">
-                <span className="pos-ref-title">{item.title}</span>
+                <span className="pos-ref-title">{item.name}</span>
               </div>
               <button
                 className="pos-ref-circle-btn"
-                aria-label={`Select ${item.title}`}
+                aria-label={`Select ${item.name}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCardClick(item);

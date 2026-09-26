@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams, useSearchParams } from "react-router-dom";
-import { useMenuItemDetail } from "../../hooks/useMenuItemDetail";
+import { useWaiterPOSMenuItemDetail } from "../../hooks/useWaiterPOS";
+import { updateWaiterCartItem } from "../../utils/waiterCartData";
 import WaiterProductDetailView from "../../components/waiter/component/WaiterProductDetailView";
 import breakfastImg from "/images/breakfast.png";
 import scrambledEggsImg from "/images/scrambled_eggs.jpg";
@@ -44,8 +45,8 @@ const WaiterEditMenuDetails = () => {
   // Extract initial selections from URL query string or location state item
   const itemInState = location.state?.item;
   const quantityParam = Number(searchParams.get("quantity") || itemInState?.quantity || 1);
-  const variationIdParam = searchParams.get("variationId");
-  const customizationIdParam = searchParams.get("customizationId");
+  const variationIdParam = searchParams.get("variationId") || itemInState?.variationId;
+  const customizationIdParam = searchParams.get("customizationId") || itemInState?.customizationId;
   const variationNameParam = searchParams.get("variationName") || itemInState?.itemVariationName;
   const customizationNameParam = searchParams.get("customizationName") || itemInState?.itemCustomizationName;
 
@@ -57,12 +58,15 @@ const WaiterEditMenuDetails = () => {
     quantity: quantityParam || 1,
   };
 
+  const targetMenuItemId = menuItemId || itemInState?.menuItemId;
+  const targetCartItemId = cartItemId || itemInState?.id;
+
   const {
     productDetails,
     effectiveItem,
     detailsLoading,
     menuLoading,
-  } = useMenuItemDetail(menuItemId, null, itemInState);
+  } = useWaiterPOSMenuItemDetail(targetMenuItemId);
 
   const activeItem = effectiveItem || itemInState || defaultItem;
   const activeDetails = productDetails || activeItem;
@@ -71,10 +75,18 @@ const WaiterEditMenuDetails = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      if (targetCartItemId) {
+        updateWaiterCartItem(targetCartItemId, dto);
+      }
+      setTimeout(() => {
+        setIsSubmitting(false);
+        navigate("/waiter/cart");
+      }, 800);
+    } catch (err) {
+      console.error("Error updating item in waiter cart:", err);
       setIsSubmitting(false);
-      navigate("/waiter/cart");
-    }, 1200);
+    }
   };
 
   return (
@@ -93,3 +105,4 @@ const WaiterEditMenuDetails = () => {
 };
 
 export default WaiterEditMenuDetails;
+

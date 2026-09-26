@@ -140,6 +140,10 @@ function App() {
               element={<WaiterOrderDetails />}
             />
             <Route
+              path="/waiter/order-details/:menuItemId"
+              element={<WaiterOrderDetails />}
+            />
+            <Route
               path="/waiter/cart"
               element={<WaiterCart />}
             />

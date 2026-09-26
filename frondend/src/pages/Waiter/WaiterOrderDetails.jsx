@@ -1,94 +1,77 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { useMenuItemDetail } from "../../hooks/useMenuItemDetail";
 import WaiterProductDetailView from "../../components/waiter/component/WaiterProductDetailView";
-import breakfastImg from "/images/breakfast.png";
-import scrambledEggsImg from "/images/scrambled_eggs.jpg";
+import { useWaiterPOSMenuItemDetail } from "../../hooks/useWaiterPOS";
+import {
+  hasPermission,
+  PERMISSION_CODES,
+  PERMISSION_KEYS,
+} from "../../utils/permissionUtils";
 
-// Fallback sample product item when no item is passed in location state
-const defaultItem = {
-  id: 101,
-  name: "Scrambled Eggs",
-  category: "Eggs",
-  basePrice: 3899,
-  discountedPrice: 3899,
-  description:
-    "Freshly scrambled eggs served with butter toast, fresh herbs, and mild seasoning.",
-  images: [
-    { id: 1, imageUrl: breakfastImg },
-    { id: 2, imageUrl: scrambledEggsImg },
-  ],
-  variations: [
-    { id: 1, name: "Single", price: "3,899" },
-    { id: 2, name: "Double", price: "5,200" },
-  ],
-  customizations: [
-    { id: 1, name: "Extra Cheese", price: 250, multiSelect: true },
-    { id: 2, name: "Spicy Salsa", price: 150, multiSelect: true },
-    { id: 3, name: "Butter Toast", price: 0, multiSelect: true },
-  ],
-  addons: [
-    {
-      id: 201,
-      addonItem: {
-        id: 107,
-        name: "Pancakes with Syrup",
-        basePrice: 1890,
-        images: [{ imageUrl: breakfastImg }],
-      },
-    },
-    {
-      id: 202,
-      addonItem: {
-        id: 108,
-        name: "Aloo Paratha",
-        basePrice: 1200,
-        images: [{ imageUrl: breakfastImg }],
-      },
-    },
-    {
-      id: 203,
-      addonItem: {
-        id: 106,
-        name: "Pastas",
-        basePrice: 2450,
-        images: [{ imageUrl: breakfastImg }],
-      },
-    },
-  ],
-};
+import { addWaiterCartItem } from "../../utils/waiterCartData";
 
 const WaiterOrderDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { menuItemId } = useParams();
+  const { menuItemId: routeMenuItemId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Hook to fetch product detail or fall back to location state item
+  const hasPosViewPermission = hasPermission(
+    PERMISSION_CODES.POS_VIEW,
+    PERMISSION_KEYS.POS_VIEW
+  );
+
+  const itemIdFromState =
+    location.state?.item?.id || location.state?.menuItemId;
+  const targetMenuItemId = routeMenuItemId || itemIdFromState;
+
   const {
     productDetails,
-    effectiveItem,
+    effectiveItem: fetchedEffectiveItem,
     detailsLoading,
     menuLoading,
-  } = useMenuItemDetail(menuItemId, null, location.state?.item);
+  } = useWaiterPOSMenuItemDetail(targetMenuItemId);
 
-  const activeItem = effectiveItem || location.state?.item || defaultItem;
-  const activeDetails = productDetails || activeItem;
+  const activeItem = fetchedEffectiveItem || location.state?.item;
 
   const handleAddToCart = (dto) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    try {
+      addWaiterCartItem(dto);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        navigate(-1);
+      }, 800);
+    } catch (err) {
+      console.error("Error adding to waiter cart:", err);
       setIsSubmitting(false);
-      navigate(-1);
-    }, 1200);
+    }
   };
+
+  if (!hasPosViewPermission) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "400px",
+          width: "100%",
+        }}
+      >
+        <h2 style={{ color: "#666", fontWeight: "700", fontSize: "1.8rem" }}>
+          NO Found
+        </h2>
+      </div>
+    );
+  }
 
   return (
     <WaiterProductDetailView
       effectiveItem={activeItem}
-      productDetails={activeDetails}
+      productDetails={productDetails}
       detailsLoading={detailsLoading}
       menuLoading={menuLoading}
       buttonLabel="Add"
